@@ -21,6 +21,7 @@ scenes = {
     'SIGNIN': SignInScene(WIDTH,HEIGHT),
     'LOBBY' : LobbySence(WIDTH,HEIGHT),
     'CHOOSESHIP': ChooseShipScene(WIDTH,HEIGHT,NUMBER),
+    'PLAYSHIP': PlayShip(WIDTH,HEIGHT,NUMBER),
 
 }
 

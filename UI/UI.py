@@ -17,7 +17,7 @@ class SignInScene:
         
     def draw(self, screen,text):
         screen.blit(self.background, (0, 0))
-        font = pygame.font.Font('UI/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 7)
+        font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 7)
         text_battle = font.render("Battle", True, pygame.Color(198, 216, 207))
         text_ship = font.render("Ship", True, pygame.Color(198, 216, 207))
         textRect = text_battle.get_rect()
@@ -30,9 +30,9 @@ class SignInScene:
         self.username_textbox.draw(screen)
         self.password_textbox.draw(screen)
         self.repassword_textbox.draw(screen)
-        play = pygame.transform.scale(pygame.image.load("UI/image/start.png"), (
-            pygame.image.load("UI/image/start.png").get_width() // 6,
-            pygame.image.load("UI/image/start.png").get_height() // 6))
+        play = pygame.transform.scale(pygame.image.load(path+"/image/start.png"), (
+            pygame.image.load(path+"/image/start.png").get_width() // 6,
+            pygame.image.load(path+"/image/start.png").get_height() // 6))
         self.playRect = play.get_rect()
         self.playRect.center = (self.WIDTH  // 2, self.HEIGHT  // 1.2)
         screen.blit(play, self.playRect)
@@ -64,7 +64,7 @@ class LoginScene:
     
         screen.blit(self.background, (0, 0))
         
-        font = pygame.font.Font('UI/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 7)
+        font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 7)
         text_battle = font.render("Battle", True, pygame.Color(198, 216, 207))
         text_ship = font.render("Ship", True, pygame.Color(198, 216, 207))
         textRect = text_battle.get_rect()
@@ -75,9 +75,9 @@ class LoginScene:
         screen.blit(text_ship, textRect)
         self.username_textbox.draw(screen)
         self.password_textbox.draw(screen)
-        play = pygame.transform.scale(pygame.image.load("UI/image/start.png"), (
-            pygame.image.load("UI/image/start.png").get_width() // 6,
-            pygame.image.load("UI/image/start.png").get_height() // 6))
+        play = pygame.transform.scale(pygame.image.load(path+"/image/start.png"), (
+            pygame.image.load(path+"/image/start.png").get_width() // 6,
+            pygame.image.load(path+"/image/start.png").get_height() // 6))
         self.playRect = play.get_rect()
         self.playRect.center = (self.WIDTH  // 2, self.HEIGHT  // 1.2)
         screen.blit(play, self.playRect)
@@ -108,7 +108,7 @@ class Textbox:
 
     def draw(self, screen):
         pygame.draw.rect(screen, self.color, self.rect, 2)
-        font = pygame.font.Font('UI/font/iCielBCDDCHardwareRough-Compressed.ttf', self.width // 30)
+        font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.width // 30)
         label_text = font.render(self.label, True, pygame.Color('white'))
         screen.blit(label_text, (self.rect.x, self.rect.y - self.width // 25))
         
@@ -363,7 +363,7 @@ class Ship:
 class LobbySence:
     def __init__(self, width , height ):
         self.posision = 0
-        self.numberPlayer = 10
+        self.numberPlayer = 12
         self.WIDTH = width
         self.HEIGHT = height
         self.background = pygame.Surface((self.WIDTH, self.HEIGHT))
@@ -372,12 +372,12 @@ class LobbySence:
         self.color = pygame.Color('lightskyblue3')
         self.boxObject = []
         for i in range(self.numberPlayer):
-            self.boxObject.append(TextboxLobby(self.WIDTH //3*2, self.HEIGHT //12 * (i+1),width,height,i))
+            self.boxObject.append(TextboxLobby(self.WIDTH //3*2, self.HEIGHT //13 * (i+1),width,height,i))
 
         
     def draw(self, screen, text):
         screen.blit(self.background, (0, 0))
-        font = pygame.font.Font('UI/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 7)
+        font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 7)
         text_battle = font.render("Battle", True, pygame.Color(198, 216, 207))
         text_ship = font.render("Ship", True, pygame.Color(198, 216, 207))
         textRect = text_battle.get_rect()
@@ -386,13 +386,24 @@ class LobbySence:
         textRect = text_ship.get_rect()
         textRect.center = (self.WIDTH // 4, self.HEIGHT // 2+self.HEIGHT //7)
         screen.blit(text_ship, textRect)
+
+        
         elements = text.split()
         ids = elements[::2]
         usernames = elements[1::2] 
         for index,x in enumerate(self.boxObject):
-            if(index >= len(usernames)):
-                break
-            x.draw(screen,usernames[index+self.posision])   
+            if(index == 0  ):
+                x.draw(screen,"/\\")  
+                continue
+            if(index == self.numberPlayer-1):
+                x.draw(screen,"\\/")  
+                continue
+
+            if(index-1 >= len(usernames)):
+                continue
+            else:
+                x.draw(screen,usernames[index-1+self.posision])   
+            
         
     def get_name(self):
         return 'LOBBY'
@@ -412,7 +423,7 @@ class TextboxLobby:
         self.height = height
 
     def draw(self, screen,text):
-        font = pygame.font.Font('UI/font/iCielBCDDCHardwareRough-Compressed.ttf', self.width // 30)
+        font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.width // 30)
         if self.rect.collidepoint(pygame.mouse.get_pos()):
             pygame.draw.rect(screen, self.color, self.rect, 2)
         
@@ -436,3 +447,61 @@ class TextboxLobby:
         #             self.text = self.text[:-1]
         #         else:
         #             self.text += event.unicode
+    
+class PlayShip:
+    def __init__(self, width , height, number ):
+        self.WIDTH = width
+        self.HEIGHT = height
+        self.NUMBER = number
+        self.GAP = 1
+        self.CELL_SIZE = height // (number + 2)
+        self.OPACITY =  75
+        self.background = pygame.Surface((self.WIDTH, self.HEIGHT))
+        self.x = (self.WIDTH //2 - self.CELL_SIZE  * self.NUMBER ) //2
+        self.y = (self.HEIGHT - self.CELL_SIZE * self.NUMBER) //2
+        bg = pygame.transform.scale(pygame.image.load(path+"/image/bg.png"), (self.WIDTH, self.HEIGHT))
+        self.background.blit(bg, (-1, 0))
+        self.color = pygame.Color('white')
+        self.color_ship = pygame.Color(179, 252, 207)
+        self.red = pygame.Color(216, 29, 29)
+        self.chess = [[0 for _ in range(number)] for _ in range(number)]
+        self.chess_op = [[0 for _ in range(number)] for _ in range(number)]
+
+
+    def draw(self, screen,text):
+        screen.blit(self.background, (0, 0))
+        for row in range(self.NUMBER):
+            for col in range(self.NUMBER ):
+                x = col * self.CELL_SIZE + self.x
+                y = row * self.CELL_SIZE + self.y
+                cell_surface = pygame.Surface((self.CELL_SIZE - self.GAP, self.CELL_SIZE - self.GAP), pygame.SRCALPHA)
+                if self.chess[row][col] == 1:
+                    cell_surface.fill((self.color_ship[0], self.color_ship[1], self.color_ship[2], self.OPACITY*2))
+                elif self.chess[row][col] == 2:
+                    cell_surface.fill((self.red[0], self.red[1], self.red[2], self.OPACITY*3))
+                else:
+                    cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
+                screen.blit(cell_surface, (x, y))       
+        
+        for row in range(self.NUMBER):
+            for col in range(self.NUMBER ):
+                x = col * self.CELL_SIZE + self.x + self.WIDTH//2
+                y = row * self.CELL_SIZE + self.y 
+                cell_rect = pygame.Rect(x, y, self.CELL_SIZE - self.GAP, self.CELL_SIZE - self.GAP)
+                if cell_rect.collidepoint(pygame.mouse.get_pos()):
+                    cell_surface.fill((self.red[0], self.red[1], self.red[2], self.OPACITY*3))
+                else:
+                    cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
+                screen.blit(cell_surface, (x, y))       
+
+
+
+
+    def get_name(self):
+        return 'PLAYSHIP'
+    
+    def update(self, events):
+        pass
+        
+    def element(self, events):
+        pass
