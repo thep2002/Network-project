@@ -7,14 +7,14 @@ typedef struct Account {
     char username[33];
     char password[257];
     int id;
-
+    int recvBattle;
     int status;
     int clientSocket;
     struct Account* nextAccount;
 } Account;
 
 typedef enum{
-LOGIN, SIGNIN, STEP, SUSSCESLOGIN, FALSELOGIN, LOBBY, LOGOUT,SENDBATTLE,CANCELBATTLE,FALSE
+LOGIN, SIGNIN, STEP, SUSSCESLOGIN, FALSELOGIN, LOBBY, LOGOUT,SENDBATTLE,RECVBATTLE1,RECVBATTLE2,FALSE
 } Header;
 
 typedef struct AccoutDOT

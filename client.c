@@ -20,7 +20,15 @@ Message* extractMessage(Message* Message, const char *message) {
             if(!strcmp(word,"LOBBY")){
                 Message->header = LOBBY;
             }
-
+            if(!strcmp(word,"SENDBATTLE")){
+                Message->header = SENDBATTLE;
+            }
+            if(!strcmp(word,"RECVBATTLE1")){
+                Message->header = RECVBATTLE1;
+            }
+            if(!strcmp(word,"RECVBATTLE2")){
+                Message->header = RECVBATTLE1;
+            }
         }
         else {
             strcat(Message->message,word);
@@ -96,6 +104,14 @@ int main(int argc, char *argv[]) {
             case LOBBY:
                 printf("%s\n",receivedStruct.message);
                 fflush(stdout);
+                break;
+            case SENDBATTLE:
+                printf("Sending\n");
+                fflush(stdout);
+            case RECVBATTLE1:
+                printf("%s\n",receivedStruct.message);
+                fflush(stdout);
+                break;
             default:
                 break;
         }

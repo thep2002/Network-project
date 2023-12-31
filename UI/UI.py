@@ -372,7 +372,9 @@ class LobbySence:
         self.background.blit(bg, (-1, 0))
         self.color = pygame.Color('lightskyblue3')
         self.boxObject = []
-        self.popup  = Popup(width, height, "Hello, this is a popup!")
+        self.us = 0
+        self.click = False
+        self.popup  = Popup(width, height, "Wating for other player")
         for i in range(self.numberPlayer):
             self.boxObject.append(TextboxLobby(self.WIDTH //3*2, self.HEIGHT //13 * (i+1),width,height,i))
 
@@ -390,19 +392,22 @@ class LobbySence:
         screen.blit(text_ship, textRect)
         if self.pop > 1:
             self.popup.draw(screen)
-        
         elements = text.split()
-        ids = elements[::2]
+        self.ids = elements[::2]
         usernames = elements[1::2] 
+        self.us = len(usernames)
         for index,x in enumerate(self.boxObject):
-            if(index == 0  ):
+            if(index == 0  and self.posision > 0 and self.us>10):
                 x.draw(screen,"/\\")  
                 continue
-            if(index == self.numberPlayer-1):
+            if(index == 0):
+                continue
+            if(index == self.numberPlayer-1 and self.us>10 and self.posision+self.numberPlayer-1<self.us):
                 x.draw(screen,"\\/")  
                 continue
-
-            if(index-1 >= len(usernames)):
+            if(index == self.numberPlayer-1):
+                continue
+            if(index-1 >= self.us):
                 continue
             else:
                 x.draw(screen,usernames[index-1+self.posision])   
@@ -411,13 +416,28 @@ class LobbySence:
     def get_name(self):
         return 'LOBBY'
     def update(self, events):
-        for x in self.boxObject:    
-            t = x.update(events)
-            if t:
-                self.pop = t
+        if self.pop >= 1:
+            self.popup.update(events)
+        else:
+            for index,x in enumerate(self.boxObject):  
+                if(index == 0  and self.posision == 0 and self.us>10):
+                    continue
+                if(index == self.numberPlayer-1 and self.us>10 and self.posision+self.numberPlayer-1 == self.us):
+                    continue
+                t = x.update(events)
+                if t==0 and index == 0:
+                    self.posision += -1
+                    continue
+                if t and index == self.numberPlayer -1:
+                    self.posision += 1
+                    continue
+                if t:
+                    self.pop = t
+                    self.click = True
 
     def element(self, events):
-        pass
+        if self.pop >= 1 and self.click:
+            return self.ids[self.posision+self.pop-1]
 
 class TextboxLobby:
     def __init__(self, x, y, width,height,i):
@@ -446,6 +466,7 @@ class TextboxLobby:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.is_active = self.rect.collidepoint(event.pos)
             if self.is_active:
+                self.is_active = False
                 return self.position
     
 class PlayShip:
@@ -481,7 +502,7 @@ class PlayShip:
                     cell_surface.fill((self.red[0], self.red[1], self.red[2], self.OPACITY*3))
                 else:
                     cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
-                screen.blit(cell_surface, (x, y))       
+                screen.blit(cell_surface, (x, y))          
         
         for row in range(self.NUMBER):
             for col in range(self.NUMBER ):
@@ -509,20 +530,20 @@ class PlayShip:
 
 class Popup:
     def __init__(self, width, height,message):
-        self.OPACITY = 0
+        self.OPACITY = 100
         self.width = width
         self.height = height
         self.message = "Play"
-        self.color =pygame.Color(100,200,123)
+        self.color = pygame.Color(pygame.Color(100,200,123) [0], pygame.Color(100,200,123) [1], pygame.Color(100,200,123) [2], self.OPACITY)
         self.rect = pygame.Rect((width - width//3) // 2, (height - height//3) // 2, width//3, height//3)
 
-        button_width, button_height = width//10, height//10
+        button_width, button_height = width//15, height//15
         self.play_button_rect = pygame.Rect(self.rect.centerx - button_width - 10, self.rect.bottom - button_height - 20, button_width, button_height)
         self.cancel_button_rect = pygame.Rect(self.rect.centerx + 10, self.rect.bottom - button_height - 20, button_width, button_height)
 
     def draw(self,screen):
         font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.width // 30)
-        self.rect.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
+        pygame.draw.rect(screen, (self.color[0], self.color[1], self.color[2], self.OPACITY), self.rect)
 
 
         text = font.render(self.message, True, (0, 0, 0))
@@ -541,10 +562,11 @@ class Popup:
         screen.blit(cancel_text, cancel_text_rect)
 
 
-    def update(self,event):
-        if event.type == pygame.MOUSEBUTTONDOWN:
-            if event.button == 1:  
-                if self.play_button_rect.collidepoint(event.pos):
-                    print("Play button clicked!")
-                elif self.cancel_button_rect.collidepoint(event.pos):
-                    print("Cancel button clicked!")
+    def update(self,events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  
+                    if self.play_button_rect.collidepoint(event.pos):
+                        print("Play button clicked!")
+                    elif self.cancel_button_rect.collidepoint(event.pos):
+                        print("Cancel button clicked!")

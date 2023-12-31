@@ -36,9 +36,9 @@ def send(p,text):
 def main():
     pygame.init()
     clock = pygame.time.Clock()
-    scene = scenes['LOBBY']
+    scene = scenes['LOGIN']
     running = True
-    text = "1 fjdkjf 1 fjdkjf 1 fjdkjf 1 fjdkjf  1 fjdkjf 1 fjdkjf 1 fjdkjf 1 fjdkjf 1 fjdkjf 1 fjdkjf"
+    text = ""
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     p = subprocess.Popen(
         ['./client', '127.0.0.1', '5000'], 
@@ -48,25 +48,32 @@ def main():
     )
     content = p.stdout.readline().strip() 
     print(content)
-
+    sending = False
     while running:
         events = pygame.event.get()
         for e in events:
             if e.type == pygame.QUIT:
                 return
-        # ele = scene.element(events)
-        # if ele:
-        #     if scene.get_name() == 'LOGIN':
-        #         if send(p,'LOGIN' + ' ' + ele + '\n') == 'SUSSCESLOGIN':
-        #             scene = scenes['LOBBY']
-        #         else:
-        #             print("False Login")
-        # if scene.get_name() == 'LOBBY':
-        #     text = send(p,'LOBBY\n')
-        #     print(text)
-
+        if scene.get_name() == 'LOBBY':
+            text = send(p,'LOBBY\n')
+            if sending:
+                popup = send(p,'RECVBATTLE1\n')
+            else:
+                popup = send(p,'RECVBATTLE2\n')
         scene.update(events)
         scene.draw(screen,text)
+        ele = scene.element(events)
+        if ele:
+            if scene.get_name() == 'LOGIN':
+                if send(p,'LOGIN' + ' ' + ele + '\n') == 'SUSSCESLOGIN':
+                    scene = scenes['LOBBY']
+                else:
+                    print("False Login")
+            elif scene.get_name() == 'LOBBY':
+                sending=True
+                send(p,'SENDBATTLE' +' '+ ele +'\n')
+        
+
 
         pygame.display.flip()
         clock.tick(30)

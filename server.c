@@ -18,6 +18,7 @@ void account(int id,char *username,char *password){
     strcpy(newAccount->username, username);
     strcpy(newAccount->password, password);
     newAccount->id = id;
+    newAccount-> recvBattle = -1;
     newAccount->status = 0;
     newAccount->nextAccount = NULL;
     newAccount->clientSocket = -1;
@@ -95,6 +96,17 @@ Account* findClient(int client) {
     return NULL;
 }
 
+Account* findId(int id) {
+    Account* current = head;
+    while (current) {
+        if (current->id == id) {
+            return current;
+        }
+        current = current->nextAccount;
+    }
+    return NULL;
+}
+
 int checkPassword(Account* current, char passwordNew[50]) {
     if (strcmp(current->password, passwordNew)) {
         return 0;
@@ -160,7 +172,7 @@ void *handle_client_thread(void *arg){
     Account* login;
     while(1){
         recv(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
-        printf("%d %s\n",receivedStruct.header,receivedStruct.message);
+        // printf("%d %s\n",receivedStruct.header,receivedStruct.message);
         switch (receivedStruct.header)
         {
         case SIGNIN:
@@ -178,6 +190,23 @@ void *handle_client_thread(void *arg){
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case LOGOUT:
+            login = NULL;
+            break;
+        case SENDBATTLE:
+            findId(atoi(receivedStruct.message))->recvBattle = login->id;
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case RECVBATTLE1:
+            if(login->recvBattle != -1){
+                strcpy(receivedStruct.message,findId(login->recvBattle)->username);
+                send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0); 
+            }
+            break;
+        case RECVBATTLE2:
+            if(login->recvBattle != -1){
+                strcpy(receivedStruct.message,findId(login->recvBattle)->username);
+                send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0); 
+            }
             break;
         case LOBBY:
             if(findClient(clientSocket)){
@@ -186,7 +215,6 @@ void *handle_client_thread(void *arg){
                 findLobby(clientSocket,receivedStruct.message);
             }
             else {
-
                 receivedStruct.header = FALSE;
             }
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
