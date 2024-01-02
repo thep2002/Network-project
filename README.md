@@ -1,4 +1,4 @@
-Using ubuntu
+Using ubuntu \n
 git clone https://github.com/thep2002/Network-project.git
 cd Network-project
 ./run.sh
