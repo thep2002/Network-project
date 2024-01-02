@@ -362,6 +362,7 @@ class Ship:
                             else:
                                 self.chess[b+x][a] = 1
                         return self.chess
+    
 
 class LobbySence:
     def __init__(self, width , height ):

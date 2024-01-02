@@ -67,18 +67,18 @@ def main():
                     if scene.drawpopup(events,False,user,screen) == 'CANCELBATTLE':
                         send(p,'CANCELBATTLE\n')
                     if scene.drawpopup(events,False,user,screen) == 'ACCEPTBATTLE':
+                        scene = scenes['CHOOSESHIP']
                         send(p,'ACCEPTBATTLE\n')
                 else:
-                    scene.checkPop(False)
-                             
+                    scene.checkPop(False)       
             else:
                 user = send(p,'RECVBATTLE2\n')
                 if(user !='-1'):
                     scene.checkPop(True)
-                    if(user == 'ACCEPTBATTLE'):
-                        scene = scenes['CHOOSESHIP']
                     if scene.drawpopup(events,True,user,screen) == 'CANCELBATTLE':
                         send(p,'CANCELBATTLE\n')
+                    if(user == 'ACCEPTBATTLE'):
+                        scene = scenes['CHOOSESHIP']
                      
                 else:
                     scene.checkPop(False)
