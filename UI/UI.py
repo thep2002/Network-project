@@ -94,6 +94,9 @@ class LoginScene:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.playRect.collidepoint(event.pos):
                     return self.username_textbox.text + ' ' + self.password_textbox.text
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_RETURN:
+                    return self.username_textbox.text + ' ' + self.password_textbox.text
 
 class Textbox:
     def __init__(self, x, y, label, width,height,is_password=False):
@@ -122,11 +125,11 @@ class Textbox:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 self.is_active = self.rect.collidepoint(event.pos)
             if event.type == pygame.KEYDOWN and self.is_active:
-                if event.key == pygame.K_RETURN:
-                    print(f"{self.label.strip()}: {self.text}")
-                    self.text = ""
-                elif event.key == pygame.K_BACKSPACE:
+
+                if event.key == pygame.K_BACKSPACE:
                     self.text = self.text[:-1]
+                elif event.key == pygame.K_RETURN:
+                    pass
                 else:
                     self.text += event.unicode
 
@@ -373,8 +376,9 @@ class LobbySence:
         self.color = pygame.Color('lightskyblue3')
         self.boxObject = []
         self.us = 0
+        self.popp = False
         self.click = False
-        self.popup  = Popup(width, height, "Wating for other player")
+        self.popup  = None
         for i in range(self.numberPlayer):
             self.boxObject.append(TextboxLobby(self.WIDTH //3*2, self.HEIGHT //13 * (i+1),width,height,i))
 
@@ -390,8 +394,6 @@ class LobbySence:
         textRect = text_ship.get_rect()
         textRect.center = (self.WIDTH // 4, self.HEIGHT // 2+self.HEIGHT //7)
         screen.blit(text_ship, textRect)
-        if self.pop > 1:
-            self.popup.draw(screen)
         elements = text.split()
         self.ids = elements[::2]
         usernames = elements[1::2] 
@@ -416,8 +418,8 @@ class LobbySence:
     def get_name(self):
         return 'LOBBY'
     def update(self, events):
-        if self.pop >= 1:
-            self.popup.update(events)
+        if self.popp:
+            pass
         else:
             for index,x in enumerate(self.boxObject):  
                 if(index == 0  and self.posision == 0 and self.us>10):
@@ -431,13 +433,26 @@ class LobbySence:
                 if t and index == self.numberPlayer -1:
                     self.posision += 1
                     continue
-                if t:
+                if t and t <= self.us:
                     self.pop = t
                     self.click = True
 
     def element(self, events):
         if self.pop >= 1 and self.click:
+            self.click=False
             return self.ids[self.posision+self.pop-1]
+    def checkPop(self,check):
+        self.popp = check
+
+    def drawpopup(self,events,isSend,text,screen):
+        if isSend:
+            self.popup = PopupSend(self.WIDTH,self.HEIGHT,text)
+        else:
+            self.popup = PopupRecive(self.WIDTH,self.HEIGHT,text)
+        self.popup.draw(screen)
+
+        return self.popup.update(events)
+        
 
 class TextboxLobby:
     def __init__(self, x, y, width,height,i):
@@ -528,12 +543,45 @@ class PlayShip:
         pass
 
 
-class Popup:
+class PopupSend:
     def __init__(self, width, height,message):
         self.OPACITY = 100
         self.width = width
         self.height = height
         self.message = "Play"
+        self.color = pygame.Color(pygame.Color(100,200,123) [0], pygame.Color(100,200,123) [1], pygame.Color(100,200,123) [2], self.OPACITY)
+        self.rect = pygame.Rect((width - width//3) // 2, (height - height//3) // 2, width//3, height//3)
+
+        button_width, button_height = width//15, height//15
+        self.cancel_button_rect = pygame.Rect(self.rect.centerx -button_width//2, self.rect.bottom - button_height - 20, button_width, button_height)
+
+    def draw(self,screen):
+        font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.width // 30)
+        pygame.draw.rect(screen, (self.color[0], self.color[1], self.color[2], self.OPACITY), self.rect)
+
+        text = font.render(self.message, True, (0, 0, 0))
+        text_rect = text.get_rect(center=self.rect.center)
+        screen.blit(text, text_rect)
+   
+        pygame.draw.rect(screen, (255, 0, 0), self.cancel_button_rect)
+        cancel_text = font.render("Cancel", True, (0, 0, 0))
+        cancel_text_rect = cancel_text.get_rect(center=self.cancel_button_rect.center)
+        screen.blit(cancel_text, cancel_text_rect)
+
+
+    def update(self,events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if event.button == 1:  
+                    if self.cancel_button_rect.collidepoint(event.pos):
+                        return 'CANCELBATTLE'
+
+class PopupRecive:
+    def __init__(self, width, height,message):
+        self.OPACITY = 100
+        self.width = width
+        self.height = height
+        self.message = message
         self.color = pygame.Color(pygame.Color(100,200,123) [0], pygame.Color(100,200,123) [1], pygame.Color(100,200,123) [2], self.OPACITY)
         self.rect = pygame.Rect((width - width//3) // 2, (height - height//3) // 2, width//3, height//3)
 
@@ -567,6 +615,6 @@ class Popup:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  
                     if self.play_button_rect.collidepoint(event.pos):
-                        print("Play button clicked!")
+                        return 'ACCEPTBATTLE'
                     elif self.cancel_button_rect.collidepoint(event.pos):
-                        print("Cancel button clicked!")
+                        return 'CANCELBATTLE'

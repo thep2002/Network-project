@@ -8,13 +8,26 @@ typedef struct Account {
     char password[257];
     int id;
     int recvBattle;
+    int sendBattle;
     int status;
     int clientSocket;
     struct Account* nextAccount;
 } Account;
 
 typedef enum{
-LOGIN, SIGNIN, STEP, SUSSCESLOGIN, FALSELOGIN, LOBBY, LOGOUT,SENDBATTLE,RECVBATTLE1,RECVBATTLE2,FALSE
+LOGIN, 
+SIGNIN, 
+STEP, 
+SUSSCESLOGIN, 
+FALSELOGIN, 
+LOBBY, 
+LOGOUT,
+SENDBATTLE,
+RECVBATTLE1,
+RECVBATTLE2,
+FALSE,
+CANCELBATTLE,
+ACCEPTBATTLE
 } Header;
 
 typedef struct AccoutDOT

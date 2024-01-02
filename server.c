@@ -19,6 +19,7 @@ void account(int id,char *username,char *password){
     strcpy(newAccount->password, password);
     newAccount->id = id;
     newAccount-> recvBattle = -1;
+    newAccount -> sendBattle = -1;
     newAccount->status = 0;
     newAccount->nextAccount = NULL;
     newAccount->clientSocket = -1;
@@ -107,12 +108,7 @@ Account* findId(int id) {
     return NULL;
 }
 
-int checkPassword(Account* current, char passwordNew[50]) {
-    if (strcmp(current->password, passwordNew)) {
-        return 0;
-    }
-    return 1;
-}
+
 void makeAccount(const char *message){
     AccoutDOT* receivedStruct = extractUsernamePassword(message);
     account(tail->id+1,receivedStruct->username,receivedStruct->password);
@@ -132,6 +128,8 @@ Account* loginAccount(char *message){
             free(receivedStruct);
             return login;
         }
+        free(receivedStruct);
+        return NULL;
     }
     else{
         free(receivedStruct);
@@ -193,20 +191,47 @@ void *handle_client_thread(void *arg){
             login = NULL;
             break;
         case SENDBATTLE:
-            findId(atoi(receivedStruct.message))->recvBattle = login->id;
+            login->sendBattle = atoi(receivedStruct.message);
+            login->status = 1;
+            findId(login->sendBattle)->status = 1;
+            findId(login->sendBattle)->recvBattle = login->id;
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case RECVBATTLE1:
             if(login->recvBattle != -1){
                 strcpy(receivedStruct.message,findId(login->recvBattle)->username);
-                send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0); 
             }
+            else{
+                strcpy(receivedStruct.message,"-1");
+            }
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0); 
             break;
         case RECVBATTLE2:
-            if(login->recvBattle != -1){
-                strcpy(receivedStruct.message,findId(login->recvBattle)->username);
-                send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0); 
+            if(login->sendBattle != -1){
+                strcpy(receivedStruct.message,"Waiting");
             }
+            else{
+                if(login->status == 2){
+                    strcpy(receivedStruct.message,"ACCEPTBATTLE");
+                }
+                else
+                    strcpy(receivedStruct.message,"-1");
+            }
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0); 
+            break;
+        case CANCELBATTLE:
+            login->status = 0;
+            if(login->sendBattle != -1){   
+                findId(login->sendBattle)->status = 0;
+                findId(login->sendBattle)->recvBattle = -1;
+                login->sendBattle = -1;
+            }
+            else{
+                findId(login->recvBattle)->status = 0;
+                findId(login->recvBattle)->sendBattle = -1;
+                login->recvBattle = -1;
+            }
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case LOBBY:
             if(findClient(clientSocket)){
@@ -219,7 +244,13 @@ void *handle_client_thread(void *arg){
             }
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
-        
+        case ACCEPTBATTLE:
+            login->status = 2;
+            findId(login->recvBattle)->status = 2;
+            findId(login->recvBattle)->sendBattle = -1;
+            login->recvBattle = -1;
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
         default:
             break;
         }

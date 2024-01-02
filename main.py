@@ -41,28 +41,49 @@ def main():
     text = ""
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     p = subprocess.Popen(
-        ['./client', '127.0.0.1', '5000'], 
+        ['./client', '127.0.0.1', '5001'], 
         stdin=subprocess.PIPE, 
         stdout=subprocess.PIPE, 
         text=True
     )
     content = p.stdout.readline().strip() 
     print(content)
-    sending = False
+    sending = True
     while running:
         events = pygame.event.get()
+        scene.draw(screen,text)
+        scene.update(events)
+        ele = scene.element(events)
+
         for e in events:
             if e.type == pygame.QUIT:
                 return
         if scene.get_name() == 'LOBBY':
             text = send(p,'LOBBY\n')
             if sending:
-                popup = send(p,'RECVBATTLE1\n')
+                user = send(p,'RECVBATTLE1\n') 
+                if(user !='-1'):
+                    scene.checkPop(True)
+                    if scene.drawpopup(events,False,user,screen) == 'CANCELBATTLE':
+                        send(p,'CANCELBATTLE\n')
+                    if scene.drawpopup(events,False,user,screen) == 'ACCEPTBATTLE':
+                        send(p,'ACCEPTBATTLE\n')
+                else:
+                    scene.checkPop(False)
+                             
             else:
-                popup = send(p,'RECVBATTLE2\n')
-        scene.update(events)
-        scene.draw(screen,text)
-        ele = scene.element(events)
+                user = send(p,'RECVBATTLE2\n')
+                if(user !='-1'):
+                    scene.checkPop(True)
+                    if(user == 'ACCEPTBATTLE'):
+                        scene = scenes['CHOOSESHIP']
+                    if scene.drawpopup(events,True,user,screen) == 'CANCELBATTLE':
+                        send(p,'CANCELBATTLE\n')
+                     
+                else:
+                    scene.checkPop(False)
+                    sending= True
+
         if ele:
             if scene.get_name() == 'LOGIN':
                 if send(p,'LOGIN' + ' ' + ele + '\n') == 'SUSSCESLOGIN':
@@ -70,7 +91,7 @@ def main():
                 else:
                     print("False Login")
             elif scene.get_name() == 'LOBBY':
-                sending=True
+                sending=False
                 send(p,'SENDBATTLE' +' '+ ele +'\n')
         
 

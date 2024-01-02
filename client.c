@@ -27,7 +27,13 @@ Message* extractMessage(Message* Message, const char *message) {
                 Message->header = RECVBATTLE1;
             }
             if(!strcmp(word,"RECVBATTLE2")){
-                Message->header = RECVBATTLE1;
+                Message->header = RECVBATTLE2;
+            }
+            if(!strcmp(word,"CANCELBATTLE")){
+                Message->header = CANCELBATTLE;
+            }
+            if(!strcmp(word,"ACCEPTBATTLE")){
+                Message->header = ACCEPTBATTLE;
             }
         }
         else {
@@ -86,8 +92,6 @@ int main(int argc, char *argv[]) {
         extractMessage(&receivedStruct, buff);
         send(sockfd, &receivedStruct, sizeof(receivedStruct), 0);
         recv(sockfd, &receivedStruct, sizeof(receivedStruct), 0);
-
-        
         switch (receivedStruct.header) {
             case SUSSCESLOGIN:
                 printf("SUSSCESLOGIN\n");
@@ -106,20 +110,30 @@ int main(int argc, char *argv[]) {
                 fflush(stdout);
                 break;
             case SENDBATTLE:
-                printf("Sending\n");
+                printf("TRUE\n");
                 fflush(stdout);
+                break;
             case RECVBATTLE1:
                 printf("%s\n",receivedStruct.message);
+                fflush(stdout);
+                break;
+            case RECVBATTLE2:
+                printf("%s\n",receivedStruct.message);
+                fflush(stdout);
+                break;
+            case CANCELBATTLE:
+                printf("TRUE\n");
+                fflush(stdout);
+                break;
+            case ACCEPTBATTLE:
+                printf("TRUE\n");
                 fflush(stdout);
                 break;
             default:
                 break;
         }
         
-    }
-
-
-    
+    }  
     
     return 0;
 }
