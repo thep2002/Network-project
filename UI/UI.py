@@ -137,13 +137,14 @@ class Textbox:
 class ChooseShipScene:
     def __init__(self, width , height, number ):
         self.stime = 0
+        self.etime = 0
         self.WIDTH = width
         self.HEIGHT = height
         self.NUMBER = number
         self.GAP = 1
         self.CELL_SIZE = height // (number + 2)
         self.OPACITY =  75
-        self.list_ship = [2,3,3,4,5]
+        self.list_ship = [5]
         self.list_ship_obj = []
         self.background = pygame.Surface((self.WIDTH, self.HEIGHT))
         self.x = (self.WIDTH //2 - self.CELL_SIZE  * self.NUMBER ) //2
@@ -171,6 +172,7 @@ class ChooseShipScene:
             pygame.image.load(path+"/image/return.png").get_width() // 6,
             pygame.image.load(path+"/image/return.png").get_height() // 6))
         self.countdown = 120
+        self.timeleft = 0
         self.retRect = self.ret.get_rect()
         self.retRect.center = (self.WIDTH  // 1.1, self.HEIGHT // 4)
         for index, x in enumerate(self.list_ship):
@@ -241,20 +243,23 @@ class ChooseShipScene:
                         self.done = True
                         return 'CANCELCHOOSE'
     def get_ship(self):
-        text = ""
-        for i in range(self.NUMBER):
-            for j in range(self.NUMBER):
-                if self.chess[i][j] == 1:
-                    text = text + str(i) + ' ' + str(j) + ' '
-        return text
+        return self.chess 
     
     def countTime(self,screen):
-        if self.stime == 0:
+        if self.stime == 0 and  self.done:
             self.stime = pygame.time.get_ticks()
-        current_time =  pygame.time.get_ticks() - self.stime 
-        seconds = current_time // 1000
+        if  self.done:
+            self.etime = pygame.time.get_ticks()
+            current_time =  pygame.time.get_ticks() - self.stime 
+        elif not self.done:
+            self.timeleft += self.etime -self.stime
+            current_time = 0
+            self.stime = 0
+            self.etime = 0
+        
+        seconds = (self.timeleft +current_time)// 1000
         font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 30)
-        label_text = font.render(f"{seconds}", True, pygame.Color('white'))
+        label_text = font.render(f"{self.countdown - seconds}", True, pygame.Color('white'))
         textRect = label_text.get_rect()
         textRect.center = (self.WIDTH // 2 ,self.HEIGHT // 9)
         screen.blit(label_text, textRect)  
@@ -561,6 +566,12 @@ class PlayShip:
         self.HEIGHT = height
         self.NUMBER = number
         self.GAP = 1
+        self.turn = False
+        self.stime = 0
+        self.done = True
+        self.etime = 0
+        self.timeleft = 0
+        self.countdown = 120
         self.CELL_SIZE = height // (number + 2)
         self.OPACITY =  75
         self.background = pygame.Surface((self.WIDTH, self.HEIGHT))
@@ -571,9 +582,18 @@ class PlayShip:
         self.color = pygame.Color('white')
         self.color_ship = pygame.Color(179, 252, 207)
         self.red = pygame.Color(216, 29, 29)
+        self.blue = pygame.Color(36, 0, 215)
         self.chess = [[0 for _ in range(number)] for _ in range(number)]
         self.chess_op = [[0 for _ in range(number)] for _ in range(number)]
-
+        self.rect = []
+        self.row = -1
+        self.column = -1
+        for row in range(self.NUMBER):
+            for col in range(self.NUMBER ):
+                x = col * self.CELL_SIZE + self.x + self.WIDTH//2
+                y = row * self.CELL_SIZE + self.y 
+                cell_rect = pygame.Rect(x, y, self.CELL_SIZE - self.GAP, self.CELL_SIZE - self.GAP)
+                self.rect.append(cell_rect)
 
     def draw(self, screen,text):
         screen.blit(self.background, (0, 0))
@@ -590,29 +610,79 @@ class PlayShip:
                     cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
                 screen.blit(cell_surface, (x, y))          
         
-        for row in range(self.NUMBER):
-            for col in range(self.NUMBER ):
-                x = col * self.CELL_SIZE + self.x + self.WIDTH//2
-                y = row * self.CELL_SIZE + self.y 
-                cell_rect = pygame.Rect(x, y, self.CELL_SIZE - self.GAP, self.CELL_SIZE - self.GAP)
-                if cell_rect.collidepoint(pygame.mouse.get_pos()):
-                    cell_surface.fill((self.red[0], self.red[1], self.red[2], self.OPACITY*3))
-                else:
-                    cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
-                screen.blit(cell_surface, (x, y))       
-
-
-
+        for i,cell_rect in enumerate(self.rect):
+            r = i // self.NUMBER 
+            c = i % self.NUMBER
+            x = c * self.CELL_SIZE + self.x + self.WIDTH//2
+            y = r * self.CELL_SIZE + self.y 
+            if cell_rect.collidepoint(pygame.mouse.get_pos()) and self.chess_op[r][c] == 0:
+                cell_surface.fill((self.blue[0], self.blue[1], self.blue[2], self.OPACITY*3))
+            elif self.chess_op[r][c] == 1:
+                cell_surface.fill((self.color_ship[0], self.color_ship[1], self.color_ship[2], self.OPACITY*2))
+            elif self.chess_op[r][c] == 2:
+                cell_surface.fill((self.red[0], self.red[1], self.red[2], self.OPACITY))
+            else:
+                cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
+            screen.blit(cell_surface, (x, y))       
 
     def get_name(self):
         return 'PLAYSHIP'
+    def setShip(self,ship):
+        self.chess = ship
     
     def update(self, events):
         pass
-        
-    def element(self, events):
-        pass
+    def check(self,row,column):
+        if(self.chess_op[row][column] != 0):
+            return False
+        else: 
+            return True
+    def setChess(self,true):
+        if true:
+            self.chess_op[self.row][self.column] = 2
+        else:
+            self.chess_op[self.row][self.column] = 1
 
+    def element(self, events):
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                for i,cell_rect in enumerate(self.rect):
+                    if cell_rect.collidepoint(event.pos):
+                        self.row = i // self.NUMBER 
+                        self.column = i % self.NUMBER 
+                        if self.check(self.row ,self.column):
+                            self.turn = False
+                            return str(self.row) + ' ' + str(self.column)
+
+    def countTime(self,screen):
+        if self.turn:
+            if self.stime == 0 and self.done:
+                self.stime = pygame.time.get_ticks()
+            if  self.done:
+                self.etime = pygame.time.get_ticks()
+                current_time =  pygame.time.get_ticks() - self.stime 
+            elif not self.done:
+                self.timeleft += self.etime -self.stime
+                current_time = 0
+                self.stime = 0
+                self.etime = 0
+            
+            seconds = (self.timeleft +current_time)// 1000
+            font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 30)
+            label_text = font.render(f"Your turn: {self.countdown - seconds}", True, pygame.Color('white'))
+            textRect = label_text.get_rect()
+            textRect.center = (self.WIDTH // 2 ,self.HEIGHT // 20)
+            screen.blit(label_text, textRect)  
+            if self.countdown <= seconds:
+                return True
+            else:
+                return False
+        else:
+            self.timeleft = 0
+
+    def getmove(self,move):
+        string_list = move.split() 
+        self.chess[int(string_list[0])][int(string_list[1])] = 2
 
 class PopupSend:
     def __init__(self, width, height,message):

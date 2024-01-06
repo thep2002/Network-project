@@ -24,6 +24,13 @@ scenes = {
     'PLAYSHIP': PlayShip(WIDTH,HEIGHT,NUMBER),
 
 }
+def extractship(chess):
+    text = ""
+    for i in range(NUMBER):
+        for j in range(NUMBER):
+            if chess[i][j] == 1:
+                text = text + str(i) + ' ' + str(j) + ' '
+    return text
 
 def send(p,text):
     p.stdin.write(text)
@@ -39,8 +46,7 @@ def main():
     scene = scenes['LOGIN']
     running = True
     text = ""
-    starttime = 0
-    endtime = 0
+    sh = None
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     p = subprocess.Popen(
         ['./client', '127.0.0.1', '5000'], 
@@ -69,18 +75,19 @@ def main():
                     if scene.drawpopup(events,False,user,screen) == 'CANCELBATTLE':
                         send(p,'CANCELBATTLE\n')
                     if scene.drawpopup(events,False,user,screen) == 'ACCEPTBATTLE':
+                        scene.__init__(WIDTH,HEIGHT)
                         scene = scenes['CHOOSESHIP']
                         send(p,'ACCEPTBATTLE\n')
                 else:
                     scene.checkPop(False)       
             else:
                 user = send(p,'RECVBATTLE2\n')
-                print(user)
                 if(user !='-1'):
                     scene.checkPop(True)
                     if scene.drawpopup(events,True,user,screen) == 'CANCELBATTLE':
                         send(p,'CANCELBATTLE\n')
                     if(user == 'ACCEPTBATTLE'):
+                        scene.__init__(WIDTH,HEIGHT)
                         scene = scenes['CHOOSESHIP']
                 else:
                     scene.checkPop(False)
@@ -89,22 +96,38 @@ def main():
         elif scene.get_name() == 'CHOOSESHIP':
             if not scene.countTime(screen):
                 send(p,'LOOSE\n')
+                scene.__init__(WIDTH,HEIGHT,NUMBER)
                 scene = scenes['LOBBY']
             else:
-                t= send(p,'ISPLAY\n')
-                if t== 'TRUE':
+                t = send(p,'ISPLAY\n')
+                if t == 'TRUE':
                     sh = scene.get_ship()
-                    # send(p,'GETSHIP '+ sh + '\n')
+                    send(p,'GETSHIP '+ extractship(sh) + '\n')
+                    scene.__init__(WIDTH,HEIGHT,NUMBER)
                     scene = scenes['PLAYSHIP']
+                    scene.setShip(sh)
                 elif t == 'WIN':
-                    sh = scene.get_ship()
-                    send(p,'GETSHIP '+ sh + '\n')
-                    scene = scenes['PLAYSHIP']
+                    scene.__init__(WIDTH,HEIGHT,NUMBER)
+                    scene = scenes['LOBBY']
 
+        elif scene.get_name() == 'PLAYSHIP':
+            if scene.countTime(screen):
+                send(p,'LOOSE\n')
+                scene.__init__(WIDTH,HEIGHT,NUMBER)
+                scene = scenes['LOBBY']
+            elif not scene.turn:
+                y = send(p,'GETMOVE\n') 
+                if y != '-1':
+                    scene.getmove(y)
+                if send(p,'GETTURN\n') == 'TRUE':
+                    scene.turn = True
+
+            
 
         if ele:
             if scene.get_name() == 'LOGIN':
                 if send(p,'LOGIN' + ' ' + ele + '\n') == 'SUSSCESLOGIN':
+                    scene.__init__(WIDTH,HEIGHT)
                     scene = scenes['LOBBY']
                 else:
                     print("False Login")
@@ -116,8 +139,11 @@ def main():
                     send(p,'DONECHOOSE\n')
                 elif ele == 'CANCELCHOOSE':
                     send(p,'CANCELCHOOSE\n')
-        
-
+            elif scene.get_name() == 'PLAYSHIP':
+                if send(p,'STEP' + ' ' + ele + '\n') == 'TRUE':
+                    scene.setChess(True)
+                else:
+                    scene.setChess(False)
 
         pygame.display.flip()
         clock.tick(30)

@@ -49,7 +49,16 @@ Message* extractMessage(Message* Message, const char *message) {
             }      
             if(!strcmp(word,"LOOSE")){
                 Message->header = LOOSE;
-            }         
+            }    
+            if(!strcmp(word,"GETTURN")){
+                Message->header = GETTURN;
+            }    
+            if(!strcmp(word,"GETMOVE")){
+                Message->header = GETMOVE;
+            }  
+            if(!strcmp(word,"STEP")){
+                Message->header = STEP;
+            }     
         }
         else {
             strcat(Message->message,word);
@@ -156,10 +165,27 @@ int main(int argc, char *argv[]) {
                 printf("TRUE\n");
                 fflush(stdout);
                 break;
+            case LOOSE:
+                printf("TRUE\n");
+                fflush(stdout);
+                break;
             case ISPLAY:
                 printf("%s\n",receivedStruct.message);
                 fflush(stdout);
                 break;
+            case GETTURN:
+                printf("%s\n",receivedStruct.message);
+                fflush(stdout);
+                break;
+            case GETMOVE:
+                printf("%s\n",receivedStruct.message);
+                fflush(stdout);
+                break;
+            case STEP:
+                printf("%s\n",receivedStruct.message);
+                fflush(stdout);
+                break;
+                
             default:
                 break;
         }

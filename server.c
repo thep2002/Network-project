@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <arpa/inet.h>
+#include <time.h>
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
@@ -18,8 +19,7 @@ void account(int id,char *username,char *password){
     strcpy(newAccount->username, username);
     strcpy(newAccount->password, password);
     newAccount->id = id;
-    newAccount-> recvBattle = -1;
-    newAccount -> sendBattle = -1;
+    newAccount-> battle = -1;
     newAccount->status = 0;
     newAccount->nextAccount = NULL;
     newAccount->clientSocket = -1;
@@ -64,7 +64,15 @@ void nhapThongTin() {
     }
     fclose(file);
 }
+void extractChess(Account* login,const char *message){
+    char word1[BUFF_SIZE + 1];
+    char word2[BUFF_SIZE + 1];
 
+    while (sscanf(message, "%s %s", word1, word2) == 2) {
+        login->chess[atoi(word1)][atoi(word2)] == 1;
+        message += strlen(word1) + strlen(word2) + 2;
+    }
+}
 void writeFile() {
     FILE* file = fopen("nguoidung.txt", "w");
     Account* current = head;
@@ -155,7 +163,15 @@ void findLobby(int clientSocket,char str[]){
         current = current->nextAccount;
     }
 }
+int checkChess(Account* login,const char *message){
+    char word1[BUFF_SIZE + 1];
+    char word2[BUFF_SIZE + 1];
 
+    sscanf(message, "%s %s", word1, word2);
+    if (findId(login->battle)->chess[atoi(word1)][atoi(word2)] == 1)
+        return 1; 
+    else return 0;
+}
 void *handle_client_thread(void *arg){
     Message receivedStruct;
     int clientSocket;
@@ -191,15 +207,15 @@ void *handle_client_thread(void *arg){
             login = NULL;
             break;
         case SENDBATTLE:
-            login->sendBattle = atoi(receivedStruct.message);
+            login->battle = atoi(receivedStruct.message);
             login->status = 1;
-            findId(login->sendBattle)->status = 1;
-            findId(login->sendBattle)->recvBattle = login->id;
+            findId(login->battle)->status = 1;
+            findId(login->battle)->battle = login->id;
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case RECVBATTLE1:
-            if(login->recvBattle != -1){
-                strcpy(receivedStruct.message,findId(login->recvBattle)->username);
+            if(login->battle != -1){
+                strcpy(receivedStruct.message,findId(login->battle)->username);
             }
             else{
                 strcpy(receivedStruct.message,"-1");
@@ -207,7 +223,7 @@ void *handle_client_thread(void *arg){
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0); 
             break;
         case RECVBATTLE2:
-            if(login->sendBattle == -1){
+            if(login->battle == -1){
                 strcpy(receivedStruct.message,"-1");
             }
             else{
@@ -221,16 +237,9 @@ void *handle_client_thread(void *arg){
             break;
         case CANCELBATTLE:
             login->status = 0;
-            if(login->sendBattle != -1){   
-                findId(login->sendBattle)->status = 0;
-                findId(login->sendBattle)->recvBattle = -1;
-                login->sendBattle = -1;
-            }
-            else{
-                findId(login->recvBattle)->status = 0;
-                findId(login->recvBattle)->sendBattle = -1;
-                login->recvBattle = -1;
-            }
+            findId(login->battle)->status = 0;
+            findId(login->battle)->battle = -1;
+            login->battle = -1;
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case LOBBY:
@@ -246,7 +255,7 @@ void *handle_client_thread(void *arg){
             break;
         case ACCEPTBATTLE:
             login->status = 2;
-            findId(login->recvBattle)->status = 2;
+            findId(login->battle)->status = 2;
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case DONECHOOSE:
@@ -258,36 +267,61 @@ void *handle_client_thread(void *arg){
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case GETSHIP:
-
+            extractChess(login,receivedStruct.message);
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case LOOSE:
             login->status = 0;
-            if(login->sendBattle != -1){ 
-                login->sendBattle = -1;
+            login->battle = -1;
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case STEP:
+            strcpy(login->move,receivedStruct.message);
+            if (checkChess(login,receivedStruct.message) == 1)
+                strcpy(receivedStruct.message,"TRUE");
+            else {
+                strcpy(receivedStruct.message,"NOT");
+                login->status = 5;
+                findId(login->battle)->status = 4;
             }
-            else login->recvBattle = -1;
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case GETMOVE:
+            if (strlen(findId(login->battle)->move)!=0){
+                strcpy(receivedStruct.message,findId(login->battle)->move);
+            }
+            else strcpy(receivedStruct.message,"-1");
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case GETTURN:
+            if (login->status == 3){
+                srand(time(NULL));
+                if (rand() % 2){
+                    login->status = 4;
+                    findId(login->battle)->status = 5;
+                }
+                else{
+                    login->status = 5;
+                    findId(login->battle)->status = 4;
+                }
+            }
+            if(login->status == 4)
+                strcpy(receivedStruct.message,"TRUE");
+            else
+                strcpy(receivedStruct.message,"NOT");
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case ISPLAY:
-            if(login->status == 3 ){
-                if(login->sendBattle != -1){   
-                    if (findId(login->sendBattle)->status == 3){                       
-                        strcpy(receivedStruct.message,"TRUE");
-                    }
-                    if (findId(login->sendBattle)->status == 0){
-                        strcpy(receivedStruct.message,"WIN");
-                    }
-                    else strcpy(receivedStruct.message,"NOT");
+            if(login->status == 3 ){   
+                if (findId(login->battle)->status == 3){                       
+                    strcpy(receivedStruct.message,"TRUE");
                 }
-                else {
-                    if (findId(login->recvBattle)->status == 3){
-                        strcpy(receivedStruct.message,"TRUE");
-                    }
-                    if (findId(login->recvBattle)->status == 0){
-                        strcpy(receivedStruct.message,"WIN");
-                    }
-                    else  strcpy(receivedStruct.message,"NOT");
+                else if (findId(login->battle)->status == 0){
+                    login->battle = -1;
+                    login->status=0;
+                    strcpy(receivedStruct.message,"WIN");
                 }
+                else strcpy(receivedStruct.message,"NOT");
             }
             else  strcpy(receivedStruct.message,"NOT");
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
