@@ -35,6 +35,21 @@ Message* extractMessage(Message* Message, const char *message) {
             if(!strcmp(word,"ACCEPTBATTLE")){
                 Message->header = ACCEPTBATTLE;
             }
+            if(!strcmp(word,"DONECHOOSE")){
+                Message->header = DONECHOOSE;
+            }
+            if(!strcmp(word,"CANCELCHOOSE")){
+                Message->header = CANCELCHOOSE;
+            }
+            if(!strcmp(word,"ISPLAY")){
+                Message->header = ISPLAY;
+            }
+            if(!strcmp(word,"GETSHIP")){
+                Message->header = GETSHIP;
+            }      
+            if(!strcmp(word,"LOOSE")){
+                Message->header = LOOSE;
+            }         
         }
         else {
             strcat(Message->message,word);
@@ -127,6 +142,22 @@ int main(int argc, char *argv[]) {
                 break;
             case ACCEPTBATTLE:
                 printf("TRUE\n");
+                fflush(stdout);
+                break;
+            case DONECHOOSE:
+                printf("TRUE\n");
+                fflush(stdout);
+                break;
+            case CANCELCHOOSE:
+                printf("TRUE\n");
+                fflush(stdout);
+                break;
+            case GETSHIP:
+                printf("TRUE\n");
+                fflush(stdout);
+                break;
+            case ISPLAY:
+                printf("%s\n",receivedStruct.message);
                 fflush(stdout);
                 break;
             default:

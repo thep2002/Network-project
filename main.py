@@ -3,7 +3,7 @@ import time
 import os
 from UI.UI import *
 import subprocess
-
+import time
 pygame.init()
 
 screen_info = pygame.display.Info()
@@ -39,9 +39,11 @@ def main():
     scene = scenes['LOGIN']
     running = True
     text = ""
+    starttime = 0
+    endtime = 0
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     p = subprocess.Popen(
-        ['./client', '127.0.0.1', '5001'], 
+        ['./client', '127.0.0.1', '5000'], 
         stdin=subprocess.PIPE, 
         stdout=subprocess.PIPE, 
         text=True
@@ -73,16 +75,32 @@ def main():
                     scene.checkPop(False)       
             else:
                 user = send(p,'RECVBATTLE2\n')
+                print(user)
                 if(user !='-1'):
                     scene.checkPop(True)
                     if scene.drawpopup(events,True,user,screen) == 'CANCELBATTLE':
                         send(p,'CANCELBATTLE\n')
                     if(user == 'ACCEPTBATTLE'):
                         scene = scenes['CHOOSESHIP']
-                     
                 else:
                     scene.checkPop(False)
                     sending= True
+
+        elif scene.get_name() == 'CHOOSESHIP':
+            if not scene.countTime(screen):
+                send(p,'LOOSE\n')
+                scene = scenes['LOBBY']
+            else:
+                t= send(p,'ISPLAY\n')
+                if t== 'TRUE':
+                    sh = scene.get_ship()
+                    # send(p,'GETSHIP '+ sh + '\n')
+                    scene = scenes['PLAYSHIP']
+                elif t == 'WIN':
+                    sh = scene.get_ship()
+                    send(p,'GETSHIP '+ sh + '\n')
+                    scene = scenes['PLAYSHIP']
+
 
         if ele:
             if scene.get_name() == 'LOGIN':
@@ -93,6 +111,11 @@ def main():
             elif scene.get_name() == 'LOBBY':
                 sending=False
                 send(p,'SENDBATTLE' +' '+ ele +'\n')
+            elif scene.get_name() == 'CHOOSESHIP':
+                if ele == 'DONECHOOSE':
+                    send(p,'DONECHOOSE\n')
+                elif ele == 'CANCELCHOOSE':
+                    send(p,'CANCELCHOOSE\n')
         
 
 

@@ -30,9 +30,9 @@ class SignInScene:
         self.username_textbox.draw(screen)
         self.password_textbox.draw(screen)
         self.repassword_textbox.draw(screen)
-        play = pygame.transform.scale(pygame.image.load(path+"/image/start.png"), (
-            pygame.image.load(path+"/image/start.png").get_width() // 6,
-            pygame.image.load(path+"/image/start.png").get_height() // 6))
+        play = pygame.transform.scale(pygame.image.load(path+"/image/stop.png"), (
+            pygame.image.load(path+"/image/stop.png").get_width() // 6,
+            pygame.image.load(path+"/image/stop.png").get_height() // 6))
         self.playRect = play.get_rect()
         self.playRect.center = (self.WIDTH  // 2, self.HEIGHT  // 1.2)
         screen.blit(play, self.playRect)
@@ -75,9 +75,9 @@ class LoginScene:
         screen.blit(text_ship, textRect)
         self.username_textbox.draw(screen)
         self.password_textbox.draw(screen)
-        play = pygame.transform.scale(pygame.image.load(path+"/image/start.png"), (
-            pygame.image.load(path+"/image/start.png").get_width() // 6,
-            pygame.image.load(path+"/image/start.png").get_height() // 6))
+        play = pygame.transform.scale(pygame.image.load(path+"/image/stop.png"), (
+            pygame.image.load(path+"/image/stop.png").get_width() // 6,
+            pygame.image.load(path+"/image/stop.png").get_height() // 6))
         self.playRect = play.get_rect()
         self.playRect.center = (self.WIDTH  // 2, self.HEIGHT  // 1.2)
         screen.blit(play, self.playRect)
@@ -136,6 +136,7 @@ class Textbox:
 
 class ChooseShipScene:
     def __init__(self, width , height, number ):
+        self.stime = 0
         self.WIDTH = width
         self.HEIGHT = height
         self.NUMBER = number
@@ -154,6 +155,24 @@ class ChooseShipScene:
         self.red = pygame.Color(216, 29, 29)
         self.chess = [[0 for _ in range(number)] for _ in range(number)]
         k = number-len(self.list_ship)
+        self.done = True
+        self.play = pygame.transform.scale(pygame.image.load(path+"/image/stop.png"), (
+            pygame.image.load(path+"/image/stop.png").get_width() // 6,
+            pygame.image.load(path+"/image/stop.png").get_height() // 6))
+        self.cancel = pygame.transform.scale(pygame.image.load(path+"/image/x.png"), (
+            pygame.image.load(path+"/image/x.png").get_width() // 6,
+            pygame.image.load(path+"/image/x.png").get_height() // 6))
+        self.playRect = self.play.get_rect()
+        self.playRect.center = (self.WIDTH  // 1.1, self.HEIGHT  // 1.2)
+        
+        self.cancelRect = self.cancel.get_rect()
+        self.cancelRect.center = (self.WIDTH  // 1.1, self.HEIGHT  // 1.2)
+        self.ret = pygame.transform.scale(pygame.image.load(path+"/image/return.png"), (
+            pygame.image.load(path+"/image/return.png").get_width() // 6,
+            pygame.image.load(path+"/image/return.png").get_height() // 6))
+        self.countdown = 120
+        self.retRect = self.ret.get_rect()
+        self.retRect.center = (self.WIDTH  // 1.1, self.HEIGHT // 4)
         for index, x in enumerate(self.list_ship):
             self.list_ship_obj.append(Ship(x,width,height,self.y + index*(k*self.CELL_SIZE//(k-1)+self.CELL_SIZE),self.CELL_SIZE, self.x ,self.y,number))
 
@@ -178,6 +197,11 @@ class ChooseShipScene:
                 else:
                     cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
                 screen.blit(cell_surface, (x, y))
+        screen.blit(self.ret, (self.retRect))
+        if(self.done):
+            screen.blit(self.play, (self.playRect))
+        else:
+            screen.blit(self.cancel, (self.cancelRect))
         for x in self.list_ship_obj:
             x.draw(screen)        
 
@@ -187,13 +211,59 @@ class ChooseShipScene:
         return 'CHOOSESHIP'
     
     def update(self, events):
-        for x in self.list_ship_obj:
-            tr = x.update(events)
-            if tr:
-                self.add_matrices()
-        
+        if self.done:
+            for x in self.list_ship_obj:
+                tr = x.update(events)
+                if tr:
+                    self.add_matrices()
+    
+    def checkShip(self):
+        k = 0
+        for i in range(self.NUMBER):
+            for j in range(self.NUMBER):
+                if self.chess[i][j] == 2:
+                    return False
+                k += self.chess[i][j]
+        if k == sum(self.list_ship):
+            return True
+        else:
+            return False
+    
     def element(self, events):
-        pass
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.playRect.collidepoint(event.pos):
+                    if self.done == True:
+                        if self.checkShip():
+                            self.done = False
+                            return 'DONECHOOSE'
+                    else:
+                        self.done = True
+                        return 'CANCELCHOOSE'
+    def get_ship(self):
+        text = ""
+        for i in range(self.NUMBER):
+            for j in range(self.NUMBER):
+                if self.chess[i][j] == 1:
+                    text = text + str(i) + ' ' + str(j) + ' '
+        return text
+    
+    def countTime(self,screen):
+        if self.stime == 0:
+            self.stime = pygame.time.get_ticks()
+        current_time =  pygame.time.get_ticks() - self.stime 
+        seconds = current_time // 1000
+        font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 30)
+        label_text = font.render(f"{seconds}", True, pygame.Color('white'))
+        textRect = label_text.get_rect()
+        textRect.center = (self.WIDTH // 2 ,self.HEIGHT // 9)
+        screen.blit(label_text, textRect)  
+        if  self.countdown <= seconds:
+            return False
+        else:
+            return True
+
+               
 
 class Ship:
     def __init__(self,len,width,height,y_s,cell_size,x,y,number):

@@ -207,15 +207,15 @@ void *handle_client_thread(void *arg){
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0); 
             break;
         case RECVBATTLE2:
-            if(login->sendBattle != -1){
-                strcpy(receivedStruct.message,"Waiting");
+            if(login->sendBattle == -1){
+                strcpy(receivedStruct.message,"-1");
             }
             else{
-                if(login->status == 2){
-                    strcpy(receivedStruct.message,"ACCEPTBATTLE");
+                if(login->status != 2){
+                    strcpy(receivedStruct.message,"Waiting");
                 }
                 else
-                    strcpy(receivedStruct.message,"-1");
+                    strcpy(receivedStruct.message,"ACCEPTBATTLE");
             }
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0); 
             break;
@@ -247,8 +247,49 @@ void *handle_client_thread(void *arg){
         case ACCEPTBATTLE:
             login->status = 2;
             findId(login->recvBattle)->status = 2;
-            findId(login->recvBattle)->sendBattle = -1;
-            login->recvBattle = -1;
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case DONECHOOSE:
+            login->status = 3;
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case CANCELCHOOSE:
+            login->status = 2;
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case GETSHIP:
+
+            break;
+        case LOOSE:
+            login->status = 0;
+            if(login->sendBattle != -1){ 
+                login->sendBattle = -1;
+            }
+            else login->recvBattle = -1;
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case ISPLAY:
+            if(login->status == 3 ){
+                if(login->sendBattle != -1){   
+                    if (findId(login->sendBattle)->status == 3){                       
+                        strcpy(receivedStruct.message,"TRUE");
+                    }
+                    if (findId(login->sendBattle)->status == 0){
+                        strcpy(receivedStruct.message,"WIN");
+                    }
+                    else strcpy(receivedStruct.message,"NOT");
+                }
+                else {
+                    if (findId(login->recvBattle)->status == 3){
+                        strcpy(receivedStruct.message,"TRUE");
+                    }
+                    if (findId(login->recvBattle)->status == 0){
+                        strcpy(receivedStruct.message,"WIN");
+                    }
+                    else  strcpy(receivedStruct.message,"NOT");
+                }
+            }
+            else  strcpy(receivedStruct.message,"NOT");
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         default:
