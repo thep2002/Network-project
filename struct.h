@@ -10,6 +10,7 @@ typedef struct Account {
     int chess[10][10];
     int id;
     int battle;
+    int wait;
     int status;
     int clientSocket;
     struct Account* nextAccount;
@@ -36,6 +37,8 @@ GETSHIP,
 GETTURN,
 LOOSE,
 GETMOVE,
+WAITING,
+NOWAITING,
 } Header;
 
 typedef struct AccoutDOT

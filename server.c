@@ -64,12 +64,51 @@ void nhapThongTin() {
     }
     fclose(file);
 }
+void ghiLog(Account* login, Message* receivedStruct) {
+    char word[BUFF_SIZE + 1];
+    switch (receivedStruct->header) {
+        case SIGNIN:
+            strcpy(word,"SIGNIN");
+            break;
+        case LOGIN:
+            strcpy(word,"LOGIN");
+            break;
+        case LOGOUT:
+            strcpy(word,"LOGOUT");
+            break;
+        case SENDBATTLE:
+            strcpy(word,"SENDBATTLE");
+            break;
+        case ACCEPTBATTLE:
+            strcpy(word,"ACCEPTBATTLE");
+            break;
+        case STEP:
+            strcpy(word,"STEP");
+            break;
+        case LOOSE:
+            strcpy(word,"LOOSE");
+            break;
+        case GETSHIP:
+            strcpy(word,"GETSHIP");
+            break;
+        default:
+            return;
+        }
+    FILE* file = fopen("log.txt", "a");
+    if (file == NULL) {
+        perror("Could not open the file\n");
+        return;
+    }
+    if (login) fprintf(file, "%d %s %s\n",login->id,word, receivedStruct->message);
+    else fprintf(file, "%s %s\n",word, receivedStruct->message);
+    fclose(file);
+}
 void extractChess(Account* login,const char *message){
     char word1[BUFF_SIZE + 1];
     char word2[BUFF_SIZE + 1];
 
     while (sscanf(message, "%s %s", word1, word2) == 2) {
-        login->chess[atoi(word1)][atoi(word2)] == 1;
+        login->chess[atoi(word1)][atoi(word2)] = 1;
         message += strlen(word1) + strlen(word2) + 2;
     }
 }
@@ -82,7 +121,12 @@ void writeFile() {
     }
     fclose(file);
 }
-
+void resetChess(Account* login){
+    int i,j;
+    for(i=0;i<10;i++)
+        for(j=0;j<10;j++)
+            login->chess[i][j] = 0;
+}
 Account* findAccount(char usernameNew[33]) {
     Account* current = head;
     while (current) {
@@ -186,7 +230,7 @@ void *handle_client_thread(void *arg){
     Account* login;
     while(1){
         recv(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
-        // printf("%d %s\n",receivedStruct.header,receivedStruct.message);
+        ghiLog(login,&receivedStruct);
         switch (receivedStruct.header)
         {
         case SIGNIN:
@@ -273,6 +317,7 @@ void *handle_client_thread(void *arg){
         case LOOSE:
             login->status = 0;
             login->battle = -1;
+            resetChess(login);
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case STEP:
@@ -289,6 +334,7 @@ void *handle_client_thread(void *arg){
         case GETMOVE:
             if (strlen(findId(login->battle)->move)!=0){
                 strcpy(receivedStruct.message,findId(login->battle)->move);
+                findId(login->battle)->move[0] = '\0';
             }
             else strcpy(receivedStruct.message,"-1");
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
@@ -305,14 +351,32 @@ void *handle_client_thread(void *arg){
                     findId(login->battle)->status = 4;
                 }
             }
-            if(login->status == 4)
+            if (findId(login->battle)->wait == 1){
+                strcpy(receivedStruct.message,"WAIT");
+            }
+            else if(findId(login->battle)->status == 0){
+                login->battle = -1;
+                login->status=0;
+                resetChess(login);
+                strcpy(receivedStruct.message,"WIN");
+            }
+            else if(login->status == 4)
                 strcpy(receivedStruct.message,"TRUE");
-            else
+            else if(login->status == 5)
                 strcpy(receivedStruct.message,"NOT");
+
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case WAITING:
+            login->wait = 1;
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case NOWAITING:
+            login->wait = 0;
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case ISPLAY:
-            if(login->status == 3 ){   
+            if(login->status == 3){   
                 if (findId(login->battle)->status == 3){                       
                     strcpy(receivedStruct.message,"TRUE");
                 }

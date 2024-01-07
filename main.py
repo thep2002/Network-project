@@ -46,6 +46,8 @@ def main():
     scene = scenes['LOGIN']
     running = True
     text = ""
+    sendloose = False
+    sendwin = False
     sh = None
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     p = subprocess.Popen(
@@ -94,35 +96,76 @@ def main():
                     sending= True
 
         elif scene.get_name() == 'CHOOSESHIP':
-            if not scene.countTime(screen):
+            if not scene.countTime(screen)  and not sendloose:
                 send(p,'LOOSE\n')
-                scene.__init__(WIDTH,HEIGHT,NUMBER)
-                scene = scenes['LOBBY']
+                sendloose = True
+            if sendloose:
+                if scene.drawpopup(screen,events,"YOU LOOSE") == 'CANCELBATTLE':
+                    scene.__init__(WIDTH,HEIGHT,NUMBER)
+                    scene = scenes['LOBBY']     
+                    sendloose = False
+            elif sendwin:
+                if scene.drawpopup(screen,events,"YOU WIN") == 'CANCELBATTLE':
+                    scene.__init__(WIDTH,HEIGHT,NUMBER)
+                    scene = scenes['LOBBY'] 
+                    sendwin = False 
             else:
                 t = send(p,'ISPLAY\n')
                 if t == 'TRUE':
                     sh = scene.get_ship()
+                    checkwin = scene.checkwin
                     send(p,'GETSHIP '+ extractship(sh) + '\n')
                     scene.__init__(WIDTH,HEIGHT,NUMBER)
                     scene = scenes['PLAYSHIP']
                     scene.setShip(sh)
+                    scene.checkwin = checkwin
                 elif t == 'WIN':
-                    scene.__init__(WIDTH,HEIGHT,NUMBER)
-                    scene = scenes['LOBBY']
+                    sendwin = True
 
         elif scene.get_name() == 'PLAYSHIP':
-            if scene.countTime(screen):
+            k = scene.countTime(screen) 
+            if scene.wait == True:
+                scene.etime1 = pygame.time.get_ticks()
+                time = scene.etime1 - scene.stime1
+                time = time // 1000
+                if scene.drawpopup(screen,events,str(scene.pauseTime - time)) == 'CANCELBATTLE' or (scene.pauseTime - time) <= 0:
+                    scene.pauseTime = scene.pauseTime - time
+                    scene.wait = False
+                    scene.done = True
+                    send(p,'NOWAITING\n')
+            elif scene.w == True:
+                scene.drawpopupnone(screen)
+                if send(p,'GETTURN\n') != 'WAIT':
+                    scene.done = True
+                    scene.w = False
+            elif (scene.checkLoose() or scene.loose) and not sendloose:
                 send(p,'LOOSE\n')
-                scene.__init__(WIDTH,HEIGHT,NUMBER)
-                scene = scenes['LOBBY']
-            elif not scene.turn:
+                sendloose = True
+            elif sendloose:
+                if scene.drawpopup(screen,events,"YOU LOOSE") == 'CANCELBATTLE':
+                    scene.__init__(WIDTH,HEIGHT,NUMBER)
+                    scene = scenes['LOBBY']     
+                    sendloose = False
+            
+            elif sendwin:
+                if scene.drawpopup(screen,events,"YOU WIN") == 'CANCELBATTLE':
+                    scene.__init__(WIDTH,HEIGHT,NUMBER)
+                    scene = scenes['LOBBY'] 
+                    sendwin = False    
+            else:
                 y = send(p,'GETMOVE\n') 
                 if y != '-1':
                     scene.getmove(y)
-                if send(p,'GETTURN\n') == 'TRUE':
+                pm= send(p,'GETTURN\n') 
+                if pm == 'TRUE':
                     scene.turn = True
-
-            
+                elif pm == 'WIN':
+                    sendwin =True
+                elif pm == 'WAIT':
+                    scene.done = False
+                    scene.w = True
+                else:
+                    scene.turn = False            
 
         if ele:
             if scene.get_name() == 'LOGIN':
@@ -140,10 +183,16 @@ def main():
                 elif ele == 'CANCELCHOOSE':
                     send(p,'CANCELCHOOSE\n')
             elif scene.get_name() == 'PLAYSHIP':
-                if send(p,'STEP' + ' ' + ele + '\n') == 'TRUE':
-                    scene.setChess(True)
+                if ele == 'WAITING':
+                    send(p,'WAITING\n')
                 else:
-                    scene.setChess(False)
+                    scene.stime = 0
+                    scene.etime = 0
+                    scene.timeleft = 0
+                    if send(p,'STEP' + ' ' + ele + '\n') == 'TRUE':
+                        scene.setChess(True)
+                    else:
+                        scene.setChess(False)
 
         pygame.display.flip()
         clock.tick(30)

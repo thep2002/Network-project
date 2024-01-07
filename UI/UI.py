@@ -145,6 +145,7 @@ class ChooseShipScene:
         self.CELL_SIZE = height // (number + 2)
         self.OPACITY =  75
         self.list_ship = [5]
+        self.checkwin = sum(self.list_ship)
         self.list_ship_obj = []
         self.background = pygame.Surface((self.WIDTH, self.HEIGHT))
         self.x = (self.WIDTH //2 - self.CELL_SIZE  * self.NUMBER ) //2
@@ -259,7 +260,10 @@ class ChooseShipScene:
         
         seconds = (self.timeleft +current_time)// 1000
         font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 30)
-        label_text = font.render(f"{self.countdown - seconds}", True, pygame.Color('white'))
+        if self.countdown - seconds > 0:
+            label_text = font.render(f"{self.countdown - seconds}", True, pygame.Color('white'))
+        else:
+            label_text = font.render("0", True, pygame.Color('white'))
         textRect = label_text.get_rect()
         textRect.center = (self.WIDTH // 2 ,self.HEIGHT // 9)
         screen.blit(label_text, textRect)  
@@ -267,6 +271,11 @@ class ChooseShipScene:
             return False
         else:
             return True
+    def drawpopup(self,screen,events,text):
+        self.popup = PopupSend(self.WIDTH,self.HEIGHT,text)
+        self.popup.draw(screen)
+        return self.popup.update(events)
+        
 
                
 
@@ -470,10 +479,12 @@ class LobbySence:
         textRect = text_ship.get_rect()
         textRect.center = (self.WIDTH // 4, self.HEIGHT // 2+self.HEIGHT //7)
         screen.blit(text_ship, textRect)
+
         elements = text.split()
         self.ids = elements[::2]
         usernames = elements[1::2] 
         self.us = len(usernames)
+        
         for index,x in enumerate(self.boxObject):
             if(index == 0  and self.posision > 0 and self.us>10):
                 x.draw(screen,"/\\")  
@@ -522,7 +533,7 @@ class LobbySence:
 
     def drawpopup(self,events,isSend,text,screen):
         if isSend:
-            self.popup = PopupSend(self.WIDTH,self.HEIGHT,text)
+            self.popup = PopupSend(self.WIDTH,self.HEIGHT,"")
         else:
             self.popup = PopupRecive(self.WIDTH,self.HEIGHT,text)
         self.popup.draw(screen)
@@ -568,10 +579,15 @@ class PlayShip:
         self.GAP = 1
         self.turn = False
         self.stime = 0
+        self.checkwin = 0
         self.done = True
         self.etime = 0
+        self.stime1 = 0
+        self.etime1 = 0
         self.timeleft = 0
-        self.countdown = 120
+        self.loose = False
+        self.countdown = 20
+        self.pauseTime = 120
         self.CELL_SIZE = height // (number + 2)
         self.OPACITY =  75
         self.background = pygame.Surface((self.WIDTH, self.HEIGHT))
@@ -586,14 +602,28 @@ class PlayShip:
         self.chess = [[0 for _ in range(number)] for _ in range(number)]
         self.chess_op = [[0 for _ in range(number)] for _ in range(number)]
         self.rect = []
+        self.wait = False
         self.row = -1
         self.column = -1
+        self.w = False
         for row in range(self.NUMBER):
             for col in range(self.NUMBER ):
                 x = col * self.CELL_SIZE + self.x + self.WIDTH//2
                 y = row * self.CELL_SIZE + self.y 
                 cell_rect = pygame.Rect(x, y, self.CELL_SIZE - self.GAP, self.CELL_SIZE - self.GAP)
                 self.rect.append(cell_rect)
+        self.play = pygame.transform.scale(pygame.image.load(path+"/image/play.png"), (
+            pygame.image.load(path+"/image/play.png").get_width() // 6,
+            pygame.image.load(path+"/image/play.png").get_height() // 6))
+        self.cancel = pygame.transform.scale(pygame.image.load(path+"/image/return.png"), (
+            pygame.image.load(path+"/image/return.png").get_width() // 6,
+            pygame.image.load(path+"/image/return.png").get_height() // 6))
+        self.playRect = self.play.get_rect()
+        self.playRect.center = (self.WIDTH  // 2, self.HEIGHT  // 1.1)
+        
+        self.cancelRect = self.cancel.get_rect()
+        self.cancelRect.center = (self.WIDTH  // 2, self.HEIGHT  // 4)
+        self.popup  = None
 
     def draw(self, screen,text):
         screen.blit(self.background, (0, 0))
@@ -606,9 +636,13 @@ class PlayShip:
                     cell_surface.fill((self.color_ship[0], self.color_ship[1], self.color_ship[2], self.OPACITY*2))
                 elif self.chess[row][col] == 2:
                     cell_surface.fill((self.red[0], self.red[1], self.red[2], self.OPACITY*3))
+                elif self.chess[row][col] == 3:
+                    cell_surface.fill((self.blue[0], self.blue[1], self.blue[2], self.OPACITY*3))
                 else:
                     cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
-                screen.blit(cell_surface, (x, y))          
+                screen.blit(cell_surface, (x, y))  
+        screen.blit(self.play, self.playRect) 
+        screen.blit(self.cancel, self.cancelRect)        
         
         for i,cell_rect in enumerate(self.rect):
             r = i // self.NUMBER 
@@ -643,16 +677,24 @@ class PlayShip:
         else:
             self.chess_op[self.row][self.column] = 1
 
-    def element(self, events):
+    def element(self, events):    
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
-                for i,cell_rect in enumerate(self.rect):
-                    if cell_rect.collidepoint(event.pos):
-                        self.row = i // self.NUMBER 
-                        self.column = i % self.NUMBER 
-                        if self.check(self.row ,self.column):
-                            self.turn = False
-                            return str(self.row) + ' ' + str(self.column)
+                if  not self.loose and not self.wait and not self.w:
+                    if self.turn:
+                        for i,cell_rect in enumerate(self.rect):
+                            if cell_rect.collidepoint(event.pos):
+                                self.row = i // self.NUMBER 
+                                self.column = i % self.NUMBER 
+                                if self.check(self.row ,self.column):
+                                    return str(self.row) + ' ' + str(self.column)
+                    if self.playRect.collidepoint(event.pos):
+                        self.done = False
+                        self.stime1 = pygame.time.get_ticks()
+                        self.wait = True
+                        return 'WAITING'
+                    if self.cancelRect.collidepoint(event.pos):
+                        self.loose = True
 
     def countTime(self,screen):
         if self.turn:
@@ -669,7 +711,10 @@ class PlayShip:
             
             seconds = (self.timeleft +current_time)// 1000
             font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 30)
-            label_text = font.render(f"Your turn: {self.countdown - seconds}", True, pygame.Color('white'))
+            if self.countdown - seconds > 0:
+                label_text = font.render(f"Tour turn: {self.countdown - seconds}", True, pygame.Color('white'))
+            else:
+                label_text = font.render("Tour turn: 0", True, pygame.Color('white'))
             textRect = label_text.get_rect()
             textRect.center = (self.WIDTH // 2 ,self.HEIGHT // 20)
             screen.blit(label_text, textRect)  
@@ -678,18 +723,43 @@ class PlayShip:
             else:
                 return False
         else:
+            self.stime = 0
+            self.etime = 0
             self.timeleft = 0
 
     def getmove(self,move):
         string_list = move.split() 
-        self.chess[int(string_list[0])][int(string_list[1])] = 2
+        if (self.chess[int(string_list[0])][int(string_list[1])] == 1):
+            self.chess[int(string_list[0])][int(string_list[1])] = 2
+        else:
+            self.chess[int(string_list[0])][int(string_list[1])] = 3
+
+    def checkLoose(self):
+        l = 0
+        for row in range(self.NUMBER):
+            for col in range(self.NUMBER):
+                if self.chess[row][col] == 2:
+                    l += 1
+        if l == self.checkwin:
+            return True
+        
+    def drawpopup(self,screen,events,text):
+        self.popup = PopupSend(self.WIDTH,self.HEIGHT,text)
+        self.popup.draw(screen)
+        return self.popup.update(events)
+    
+    def drawpopupnone(self,screen):
+        self.popup = PopupNone(self.WIDTH,self.HEIGHT)
+        self.popup.draw(screen)
+
+        
 
 class PopupSend:
     def __init__(self, width, height,message):
         self.OPACITY = 100
         self.width = width
         self.height = height
-        self.message = "Play"
+        self.message = message
         self.color = pygame.Color(pygame.Color(100,200,123) [0], pygame.Color(100,200,123) [1], pygame.Color(100,200,123) [2], self.OPACITY)
         self.rect = pygame.Rect((width - width//3) // 2, (height - height//3) // 2, width//3, height//3)
 
@@ -715,8 +785,8 @@ class PopupSend:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if event.button == 1:  
                     if self.cancel_button_rect.collidepoint(event.pos):
-                        return 'CANCELBATTLE'
-
+                        return 'CANCELBATTLE'               
+                    
 class PopupRecive:
     def __init__(self, width, height,message):
         self.OPACITY = 100
@@ -759,3 +829,22 @@ class PopupRecive:
                         return 'ACCEPTBATTLE'
                     elif self.cancel_button_rect.collidepoint(event.pos):
                         return 'CANCELBATTLE'
+                    
+class PopupNone:
+    def __init__(self, width, height):
+        self.OPACITY = 100
+        self.width = width
+        self.height = height
+        self.message = "Waiting"
+        self.color = pygame.Color(pygame.Color(100,200,123) [0], pygame.Color(100,200,123) [1], pygame.Color(100,200,123) [2], self.OPACITY)
+        self.rect = pygame.Rect((width - width//3) // 2, (height - height//3) // 2, width//3, height//3)
+
+    def draw(self,screen):
+        font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.width // 30)
+        pygame.draw.rect(screen, (self.color[0], self.color[1], self.color[2], self.OPACITY), self.rect)
+        text = font.render(self.message, True, (0, 0, 0))
+        text_rect = text.get_rect(center=self.rect.center)
+        screen.blit(text, text_rect)
+
+    def update(self,events):
+        pass

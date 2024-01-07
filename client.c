@@ -58,7 +58,13 @@ Message* extractMessage(Message* Message, const char *message) {
             }  
             if(!strcmp(word,"STEP")){
                 Message->header = STEP;
-            }     
+            }   
+            if(!strcmp(word,"WAITING")){
+                Message->header = WAITING;
+            }  
+            if(!strcmp(word,"NOWAITING")){
+                Message->header = NOWAITING;
+            }      
         }
         else {
             strcat(Message->message,word);
@@ -185,7 +191,14 @@ int main(int argc, char *argv[]) {
                 printf("%s\n",receivedStruct.message);
                 fflush(stdout);
                 break;
-                
+            case WAITING:
+                printf("TRUE\n");
+                fflush(stdout);
+                break;
+            case NOWAITING:
+                printf("TRUE\n");
+                fflush(stdout);
+                break;
             default:
                 break;
         }
