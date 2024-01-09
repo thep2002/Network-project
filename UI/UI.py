@@ -141,6 +141,7 @@ class ChooseShipScene:
         self.WIDTH = width
         self.HEIGHT = height
         self.NUMBER = number
+        self.loose = False
         self.GAP = 1
         self.CELL_SIZE = height // (number + 2)
         self.OPACITY =  75
@@ -233,16 +234,20 @@ class ChooseShipScene:
             return False
     
     def element(self, events):
-        for event in events:
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                if self.playRect.collidepoint(event.pos):
-                    if self.done == True:
-                        if self.checkShip():
-                            self.done = False
-                            return 'DONECHOOSE'
-                    else:
-                        self.done = True
-                        return 'CANCELCHOOSE'
+        if not self.loose:
+            for event in events:
+                if event.type == pygame.MOUSEBUTTONDOWN:
+                    if self.playRect.collidepoint(event.pos):
+                        if self.done == True:
+                            if self.checkShip():
+                                self.done = False
+                                return 'DONECHOOSE'
+                        else:
+                            self.done = True
+                            return 'CANCELCHOOSE'
+                    if self.retRect.collidepoint(event.pos):
+                        self.loose = True
+                
     def get_ship(self):
         return self.chess 
     

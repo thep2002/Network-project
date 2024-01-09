@@ -380,13 +380,13 @@ void *handle_client_thread(void *arg){
                 if (findId(login->battle)->status == 3){                       
                     strcpy(receivedStruct.message,"TRUE");
                 }
-                else if (findId(login->battle)->status == 0){
+                else strcpy(receivedStruct.message,"NOT");
+            }
+            else if (findId(login->battle)->status == 0){
                     login->battle = -1;
                     login->status=0;
                     strcpy(receivedStruct.message,"WIN");
                 }
-                else strcpy(receivedStruct.message,"NOT");
-            }
             else  strcpy(receivedStruct.message,"NOT");
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;

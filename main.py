@@ -96,7 +96,7 @@ def main():
                     sending= True
 
         elif scene.get_name() == 'CHOOSESHIP':
-            if not scene.countTime(screen)  and not sendloose:
+            if (not scene.countTime(screen) or scene.loose)  and not sendloose:
                 send(p,'LOOSE\n')
                 sendloose = True
             if sendloose:
@@ -182,6 +182,7 @@ def main():
                     send(p,'DONECHOOSE\n')
                 elif ele == 'CANCELCHOOSE':
                     send(p,'CANCELCHOOSE\n')
+                
             elif scene.get_name() == 'PLAYSHIP':
                 if ele == 'WAITING':
                     send(p,'WAITING\n')
