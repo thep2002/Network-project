@@ -22,6 +22,7 @@ scenes = {
     'LOBBY' : LobbySence(WIDTH,HEIGHT),
     'CHOOSESHIP': ChooseShipScene(WIDTH,HEIGHT,NUMBER),
     'PLAYSHIP': PlayShip(WIDTH,HEIGHT,NUMBER),
+    'VIEW': ViewShip(WIDTH,HEIGHT,NUMBER),
 
 }
 def extractship(chess):
@@ -57,6 +58,7 @@ def main():
         text=True
     )
     content = p.stdout.readline().strip() 
+    
     print(content)
     sending = True
     while running:
@@ -69,34 +71,35 @@ def main():
             if e.type == pygame.QUIT:
                 return
         if scene.get_name() == 'LOBBY':
-            text = send(p,'LOBBY\n')
-            if sending:
-                user = send(p,'RECVBATTLE1\n') 
-                if(user !='-1'):
-                    scene.checkPop(True)
-                    if scene.drawpopup(events,False,user,screen) == 'CANCELBATTLE':
-                        send(p,'CANCELBATTLE\n')
-                    if scene.drawpopup(events,False,user,screen) == 'ACCEPTBATTLE':
-                        scene.__init__(WIDTH,HEIGHT)
-                        scene = scenes['CHOOSESHIP']
-                        send(p,'ACCEPTBATTLE\n')
+            if scene.check:
+                text = send(p,'LOBBY\n')
+                if sending:
+                    user = send(p,'RECVBATTLE1\n') 
+                    if(user !='-1'):
+                        scene.checkPop(True)
+                        if scene.drawpopup(events,False,user,screen) == 'CANCELBATTLE':
+                            send(p,'CANCELBATTLE\n')
+                        if scene.drawpopup(events,False,user,screen) == 'ACCEPTBATTLE':
+                            scene.__init__(WIDTH,HEIGHT)
+                            scene = scenes['CHOOSESHIP']
+                            send(p,'ACCEPTBATTLE\n')
+                    else:
+                        scene.checkPop(False)       
                 else:
-                    scene.checkPop(False)       
-            else:
-                user = send(p,'RECVBATTLE2\n')
-                if(user !='-1'):
-                    scene.checkPop(True)
-                    if scene.drawpopup(events,True,user,screen) == 'CANCELBATTLE':
-                        send(p,'CANCELBATTLE\n')
-                    if(user == 'ACCEPTBATTLE'):
-                        scene.__init__(WIDTH,HEIGHT)
-                        scene = scenes['CHOOSESHIP']
-                else:
-                    scene.checkPop(False)
-                    sending= True
+                    user = send(p,'RECVBATTLE2\n')
+                    if(user !='-1'):
+                        scene.checkPop(True)
+                        if scene.drawpopup(events,True,user,screen) == 'CANCELBATTLE':
+                            send(p,'CANCELBATTLE\n')
+                        if(user == 'ACCEPTBATTLE'):
+                            scene.__init__(WIDTH,HEIGHT)
+                            scene = scenes['CHOOSESHIP']
+                    else:
+                        scene.checkPop(False)
+                        sending= True
 
         elif scene.get_name() == 'CHOOSESHIP':
-            if (not scene.countTime(screen) or scene.loose)  and not sendloose:
+            if (not scene.countTime(screen) or scene.loose)  and not sendloose and not sendwin:
                 send(p,'LOOSE\n')
                 sendloose = True
             if sendloose:
@@ -138,7 +141,7 @@ def main():
                 if send(p,'GETTURN\n') != 'WAIT':
                     scene.done = True
                     scene.w = False
-            elif (scene.checkLoose() or scene.loose or k) and not sendloose:
+            elif (scene.checkLoose() or scene.loose or k) and not sendloose and not sendwin:
                 send(p,'LOOSE\n')
                 sendloose = True
             elif sendloose:
@@ -165,7 +168,12 @@ def main():
                     scene.done = False
                     scene.w = True
                 else:
-                    scene.turn = False            
+                    scene.turn = False 
+        elif scene.get_name() == 'VIEWSHIP':
+            scene.etime = pygame.time.get_ticks()
+            if (scene.etime-scene.stime) > 1000 or scene.count == 1 or scene.count == 2 and not scene.done:
+                scene.check(send(p,'SENDVIEW' + ' ' + str(scene.count) + '\n'))
+                scene.stime = pygame.time.get_ticks()          
 
         if ele:
             if scene.get_name() == 'LOGIN':
@@ -175,14 +183,25 @@ def main():
                 else:
                     print("False Login")
             elif scene.get_name() == 'LOBBY':
-                sending=False
-                send(p,'SENDBATTLE' +' '+ ele +'\n')
+                if ele == 'GETMATCH':
+                    text = send(p,'GETMATCH\n')
+                else:
+                    if not scene.check:
+                        send(p,'SENDTXT' +' '+ ele +'\n')
+                        scene.__init__(WIDTH,HEIGHT)
+                        scene = scenes['VIEW']
+                        scene.stime = pygame.time.get_ticks()
+                    else:
+                        sending=False
+                        send(p,'SENDBATTLE' +' '+ ele +'\n')
             elif scene.get_name() == 'CHOOSESHIP':
                 if ele == 'DONECHOOSE':
                     send(p,'DONECHOOSE\n')
                 elif ele == 'CANCELCHOOSE':
                     send(p,'CANCELCHOOSE\n')
-                
+            elif scene.get_name() == 'VIEWSHIP':
+                scene.__init__(WIDTH,HEIGHT,NUMBER)
+                scene = scenes['LOBBY']
             elif scene.get_name() == 'PLAYSHIP':
                 if ele == 'WAITING':
                     send(p,'WAITING\n')

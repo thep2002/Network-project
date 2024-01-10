@@ -7,12 +7,16 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <pthread.h>
+#include <dirent.h>
 #include "struct.h"
+#include <time.h>
 
 #define BUFF_SIZE 1024
 
 Account* head = NULL;
 Account* tail = NULL;
+
+const char *directory = "play/";
 
 void account(int id,char *username,char *password){
     Account* newAccount = (Account*)malloc(sizeof(Account));
@@ -82,18 +86,28 @@ void ghiLog(Account* login, Message* receivedStruct) {
         case ACCEPTBATTLE:
             strcpy(word,"ACCEPTBATTLE");
             break;
+        case CANCELBATTLE:
+            strcpy(word,"CANCELBATTLE");
+            break;
         case STEP:
             strcpy(word,"STEP");
+            FILE* file_1 = fopen(login->chesstxt, "a");
+            fprintf(file_1, "%d %s\n",login->id, receivedStruct->message);
+            fclose(file_1);
             break;
         case LOOSE:
             strcpy(word,"LOOSE");
             break;
         case GETSHIP:
             strcpy(word,"GETSHIP");
+            FILE* file_2 = fopen(login->chesstxt, "a");
+            fprintf(file_2, "%s %d %s\n",login->username,login->id, receivedStruct->message);
+            fclose(file_2);
             break;
         default:
             return;
         }
+        
     FILE* file = fopen("log.txt", "a");
     if (file == NULL) {
         perror("Could not open the file\n");
@@ -207,6 +221,58 @@ void findLobby(int clientSocket,char str[]){
         current = current->nextAccount;
     }
 }
+void findBattle(int id, char str[]){
+    DIR *dir;
+    int value1, value2;
+    struct dirent *ent;
+    char extractedString[50]; 
+    char str1[256];
+    if ((dir = opendir("./play")) != NULL) {
+        while ((ent = readdir(dir)) != NULL) {
+            if (strstr(ent->d_name, ".txt") != NULL) {
+                char *dotPos = strchr(ent->d_name, '.');
+                if (dotPos != NULL) {
+                    size_t length = dotPos - ent->d_name;
+                    strncpy(extractedString, ent->d_name, length);
+                    extractedString[length] = '\0';
+
+                }
+                if (sscanf(extractedString, "%d_%d_%s", &value1, &value2, str1) == 3) {
+                    if(value1 == id || value2 == id){
+                        strcat(str, "./play/");
+                        strcat(str, ent->d_name);
+                        strcat(str, " ");
+                        strcat(str, str1);
+                        strcat(str, " ");
+                    }
+                }
+            }
+        
+        }
+    }
+    closedir(dir);
+}
+   
+void sendView(int id, char str[],Account* login){
+    FILE *file;
+    char line[256];  
+    file = fopen(login->chesstxt, "r");
+    if (file == NULL) {
+        perror("Không thể mở tệp tin");
+        return ;
+    }
+
+    for (int i = 1; i <= id; ++i) {
+        if (fgets(line, sizeof(line), file) == NULL) {
+            strcpy(str,"DONE");
+            fclose(file);
+            return;
+        }
+    }
+    strcpy(str,line);
+    fclose(file);
+    return;
+} 
 int checkChess(Account* login,const char *message){
     char word1[BUFF_SIZE + 1];
     char word2[BUFF_SIZE + 1];
@@ -218,7 +284,7 @@ int checkChess(Account* login,const char *message){
 }
 void *handle_client_thread(void *arg){
     Message receivedStruct;
-    int clientSocket;
+    int clientSocket,m;
     struct sockaddr_in client_addr;
     socklen_t len = sizeof(client_addr);
     clientSocket = *((int*)arg);
@@ -317,6 +383,7 @@ void *handle_client_thread(void *arg){
         case LOOSE:
             login->status = 0;
             login->battle = -1;
+            login->chesstxt[0] = '\0';
             resetChess(login);
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
@@ -357,6 +424,7 @@ void *handle_client_thread(void *arg){
             else if(findId(login->battle)->status == 0){
                 login->battle = -1;
                 login->status=0;
+                login->chesstxt[0] = '\0';
                 resetChess(login);
                 strcpy(receivedStruct.message,"WIN");
             }
@@ -379,6 +447,17 @@ void *handle_client_thread(void *arg){
             if(login->status == 3){   
                 if (findId(login->battle)->status == 3){                       
                     strcpy(receivedStruct.message,"TRUE");
+                    if (strlen(login->chesstxt) == 0) {
+                        char filename[20]; 
+                        time_t rawtime;
+                        struct tm *timeinfo;
+                        time(&rawtime);
+                        timeinfo = localtime(&rawtime);
+                        sprintf(filename, "%d_%d_%02d%02d%02d%02d.txt", login->id, login->battle,
+                        timeinfo->tm_mon + 1, timeinfo->tm_mday,timeinfo->tm_hour, timeinfo->tm_min);
+                        sprintf(login->chesstxt, "%s%s", directory, filename);
+                        sprintf(findId(login->battle)->chesstxt, "%s%s", directory, filename);
+                    }
                 }
                 else strcpy(receivedStruct.message,"NOT");
             }
@@ -388,6 +467,23 @@ void *handle_client_thread(void *arg){
                     strcpy(receivedStruct.message,"WIN");
                 }
             else  strcpy(receivedStruct.message,"NOT");
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case GETMATCH:
+            findBattle(login->id,receivedStruct.message);
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case SENDTXT:
+            strcpy(login->chesstxt,receivedStruct.message);
+            login->chesstxt[strlen(login->chesstxt)-1] = '\0';
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case SENDVIEW:
+            m = atoi(receivedStruct.message);
+            memset(&receivedStruct, 0, sizeof(receivedStruct));
+            receivedStruct.header = SENDVIEW;
+            sendView(m,receivedStruct.message,login);
+            printf("%s\n",receivedStruct.message);
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         default:

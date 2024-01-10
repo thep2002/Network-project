@@ -7,6 +7,7 @@ typedef struct Account {
     char username[33];
     char move[10];
     char password[257];
+    char chesstxt[50];
     int chess[10][10];
     int id;
     int battle;
@@ -34,11 +35,14 @@ DONECHOOSE,
 CANCELCHOOSE,
 ISPLAY,
 GETSHIP,
+SENDTXT,
 GETTURN,
 LOOSE,
 GETMOVE,
 WAITING,
 NOWAITING,
+GETMATCH,
+SENDVIEW,
 } Header;
 
 typedef struct AccoutDOT

@@ -64,7 +64,16 @@ Message* extractMessage(Message* Message, const char *message) {
             }  
             if(!strcmp(word,"NOWAITING")){
                 Message->header = NOWAITING;
-            }      
+            }    
+            if(!strcmp(word,"GETMATCH")){
+                Message->header = GETMATCH;
+            }   
+            if(!strcmp(word,"SENDVIEW")){
+                Message->header = SENDVIEW;
+            }  
+            if(!strcmp(word,"SENDTXT")){
+                Message->header = SENDTXT;
+            }  
         }
         else {
             strcat(Message->message,word);
@@ -187,6 +196,10 @@ int main(int argc, char *argv[]) {
                 printf("%s\n",receivedStruct.message);
                 fflush(stdout);
                 break;
+            case SENDTXT:
+                printf("%s\n",receivedStruct.message);
+                fflush(stdout);
+                break;
             case STEP:
                 printf("%s\n",receivedStruct.message);
                 fflush(stdout);
@@ -197,6 +210,14 @@ int main(int argc, char *argv[]) {
                 break;
             case NOWAITING:
                 printf("TRUE\n");
+                fflush(stdout);
+                break;
+            case GETMATCH:
+                printf("%s\n",receivedStruct.message);
+                fflush(stdout);
+                break;
+            case SENDVIEW:
+                printf("%s\n",receivedStruct.message);
                 fflush(stdout);
                 break;
             default:

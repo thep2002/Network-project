@@ -455,6 +455,7 @@ class Ship:
 
 class LobbySence:
     def __init__(self, width , height ):
+        self.check = True
         self.posision = 0
         self.numberPlayer = 12
         self.WIDTH = width
@@ -469,6 +470,17 @@ class LobbySence:
         self.popp = False
         self.click = False
         self.popup  = None
+        self.ret = pygame.transform.scale(pygame.image.load(path+"/image/return.png"), (
+            pygame.image.load(path+"/image/return.png").get_width() // 6,
+            pygame.image.load(path+"/image/return.png").get_height() // 6))
+        self.menu = pygame.transform.scale(pygame.image.load(path+"/image/menu.png"), (
+            pygame.image.load(path+"/image/menu.png").get_width() // 6,
+            pygame.image.load(path+"/image/menu.png").get_height() // 6))
+        self.retRect = self.ret.get_rect()
+        self.retRect.center = (self.WIDTH  // 2, self.HEIGHT  // 3)
+        
+        self.menuRect = self.menu.get_rect()
+        self.menuRect.center = (self.WIDTH  // 2, self.HEIGHT  // 1.5)
         for i in range(self.numberPlayer):
             self.boxObject.append(TextboxLobby(self.WIDTH //3*2, self.HEIGHT //13 * (i+1),width,height,i))
 
@@ -489,6 +501,8 @@ class LobbySence:
         self.ids = elements[::2]
         usernames = elements[1::2] 
         self.us = len(usernames)
+        screen.blit(self.ret, (self.retRect))
+        screen.blit(self.menu, (self.menuRect))
         
         for index,x in enumerate(self.boxObject):
             if(index == 0  and self.posision > 0 and self.us>10):
@@ -533,6 +547,13 @@ class LobbySence:
         if self.pop >= 1 and self.click:
             self.click=False
             return self.ids[self.posision+self.pop-1]
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.menuRect.collidepoint(pygame.mouse.get_pos()):
+                    self.check = not self.check
+                    if not self.check:
+                        return 'GETMATCH'
+        
     def checkPop(self,check):
         self.popp = check
 
@@ -717,9 +738,9 @@ class PlayShip:
             seconds = (self.timeleft +current_time)// 1000
             font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 30)
             if self.countdown - seconds > 0:
-                label_text = font.render(f"Tour turn: {self.countdown - seconds}", True, pygame.Color('white'))
+                label_text = font.render(f"Your turn: {self.countdown - seconds}", True, pygame.Color('white'))
             else:
-                label_text = font.render("Tour turn: 0", True, pygame.Color('white'))
+                label_text = font.render("Your turn: 0", True, pygame.Color('white'))
             textRect = label_text.get_rect()
             textRect.center = (self.WIDTH // 2 ,self.HEIGHT // 20)
             screen.blit(label_text, textRect)  
@@ -791,7 +812,127 @@ class PopupSend:
                 if event.button == 1:  
                     if self.cancel_button_rect.collidepoint(event.pos):
                         return 'CANCELBATTLE'               
-                    
+class ViewShip:
+    def __init__(self, width , height, number ):
+        self.WIDTH = width
+        self.HEIGHT = height
+        self.NUMBER = number
+        self.GAP = 1  
+        self.stime = 0
+        self.etime = 0
+        self.done = False
+        self.count = 1
+        self.first = -1
+        self.u1 = ""
+        self.u2 = ""
+        self.CELL_SIZE = height // (number + 2)
+        self.OPACITY =  75
+        self.background = pygame.Surface((self.WIDTH, self.HEIGHT))
+        self.x = (self.WIDTH //2 - self.CELL_SIZE  * self.NUMBER ) //2
+        self.y = (self.HEIGHT - self.CELL_SIZE * self.NUMBER) //2
+        bg = pygame.transform.scale(pygame.image.load(path+"/image/bg.png"), (self.WIDTH, self.HEIGHT))
+        self.background.blit(bg, (-1, 0))
+        self.color = pygame.Color('white')
+        self.color_ship = pygame.Color(179, 252, 207)
+        self.red = pygame.Color(216, 29, 29)
+        self.blue = pygame.Color(36, 0, 215)
+        self.chess = [[0 for _ in range(number)] for _ in range(number)]
+        self.chess_op = [[0 for _ in range(number)] for _ in range(number)]
+
+        self.cancel = pygame.transform.scale(pygame.image.load(path+"/image/return.png"), (
+            pygame.image.load(path+"/image/return.png").get_width() // 6,
+            pygame.image.load(path+"/image/return.png").get_height() // 6))
+
+        self.cancelRect = self.cancel.get_rect()
+        self.cancelRect.center = (self.WIDTH  // 2, self.HEIGHT  // 4)
+
+    def draw(self, screen,text):
+        screen.blit(self.background, (0, 0))
+        for row in range(self.NUMBER):
+            for col in range(self.NUMBER ):
+                x = col * self.CELL_SIZE + self.x
+                y = row * self.CELL_SIZE + self.y 
+                cell_surface = pygame.Surface((self.CELL_SIZE - self.GAP, self.CELL_SIZE - self.GAP), pygame.SRCALPHA)
+                if self.chess[row][col] == 1:
+                    cell_surface.fill((self.color_ship[0], self.color_ship[1], self.color_ship[2], self.OPACITY*2))
+                elif self.chess[row][col] == 2:
+                    cell_surface.fill((self.red[0], self.red[1], self.red[2], self.OPACITY*3))
+                elif self.chess[row][col] == 3:
+                    cell_surface.fill((self.blue[0], self.blue[1], self.blue[2], self.OPACITY*3))
+                else:
+                    cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
+                screen.blit(cell_surface, (x, y))  
+        screen.blit(self.cancel, self.cancelRect)      
+
+        for row in range(self.NUMBER):
+            for col in range(self.NUMBER ):
+                x = col * self.CELL_SIZE + self.x
+                y = row * self.CELL_SIZE + self.y + self.WIDTH//2
+                cell_surface = pygame.Surface((self.CELL_SIZE - self.GAP, self.CELL_SIZE - self.GAP), pygame.SRCALPHA)
+                if self.chess[row][col] == 1:
+                    cell_surface.fill((self.color_ship[0], self.color_ship[1], self.color_ship[2], self.OPACITY*2))
+                elif self.chess[row][col] == 2:
+                    cell_surface.fill((self.red[0], self.red[1], self.red[2], self.OPACITY*3))
+                elif self.chess[row][col] == 3:
+                    cell_surface.fill((self.blue[0], self.blue[1], self.blue[2], self.OPACITY*3))
+                else:
+                    cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
+                screen.blit(cell_surface, (x, y))  
+        screen.blit(self.cancel, self.cancelRect)   
+             
+        font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 30)
+        label_text = font.render(self.u1, True, pygame.Color('white'))
+        textRect = label_text.get_rect()
+        textRect.center = (self.WIDTH // 4 ,self.HEIGHT // 20)
+        screen.blit(label_text, textRect)  
+
+        label_text_1 = font.render(self.u2, True, pygame.Color('white'))
+        textRect_1 = label_text_1.get_rect()
+        textRect_1.center = (self.WIDTH // 4 ,self.HEIGHT // 20)
+        screen.blit(label_text_1, textRect_1)  
+
+    def get_name(self):
+        return 'VIEWSHIP'
+    
+    def update(self, events):
+        pass
+
+    def check(self,text):
+        print(text)
+        if text == 'DONE':
+            self.done = True
+        elif self.count == 1 or self.count == 2:
+            elements = text.split()
+            numbers = [int(element) for element in elements[1:] if element.isdigit()]
+            if self.first == -1:
+                self.u1 = elements[0]
+                self.first = numbers[0]
+                for i in range((len(numbers)-1)//2):
+                    self.chess[numbers[i+1]][numbers[i+2]] = 1
+                    i += 2
+            else:
+                self.u2 = elements[0]
+                for i in range((len(numbers)-1)//2):
+                    self.chess_op[numbers[i+1]][numbers[i+2]] = 1
+                    i += 2
+        else:
+            numbers = [int(element) for element in elements[0:] if element.isdigit()]
+            if self.first == numbers[0]:
+                if (self.chess[numbers[1]][numbers[2]] == 1):
+                    self.chess[numbers[1]][numbers[2]] = 2
+                else:
+                    self.chess[numbers[1]][numbers[2]] = 3     
+        self.count +=1
+
+
+    def element(self, events):    
+        for event in events:
+            if event.type == pygame.MOUSEBUTTONDOWN:
+                if self.cancelRect.collidepoint(event.pos):
+                    return 'TRUE'
+    
+   
+  
 class PopupRecive:
     def __init__(self, width, height,message):
         self.OPACITY = 100
