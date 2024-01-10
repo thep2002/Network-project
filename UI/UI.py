@@ -145,7 +145,7 @@ class ChooseShipScene:
         self.GAP = 1
         self.CELL_SIZE = height // (number + 2)
         self.OPACITY =  75
-        self.list_ship = [5]
+        self.list_ship = [2,3,3,4,5]
         self.checkwin = sum(self.list_ship)
         self.list_ship_obj = []
         self.background = pygame.Surface((self.WIDTH, self.HEIGHT))

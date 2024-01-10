@@ -138,7 +138,7 @@ def main():
                 if send(p,'GETTURN\n') != 'WAIT':
                     scene.done = True
                     scene.w = False
-            elif (scene.checkLoose() or scene.loose) and not sendloose:
+            elif (scene.checkLoose() or scene.loose or k) and not sendloose:
                 send(p,'LOOSE\n')
                 sendloose = True
             elif sendloose:
