@@ -7,12 +7,13 @@ class SignInScene:
     def __init__(self, width , height ):
         self.WIDTH = width
         self.HEIGHT = height
+        self.lp = False
         self.background = pygame.Surface((self.WIDTH, self.HEIGHT))
         bg = pygame.transform.scale(pygame.image.load(path+"/image/bg.png"), (self.WIDTH, self.HEIGHT))
         self.background.blit(bg, (-1, 0))
-        self.username_textbox = Textbox(self.WIDTH //3*2, self.HEIGHT // 2 - self.HEIGHT //12, "Username:",width,height)
-        self.password_textbox = Textbox(self.WIDTH  //3*2, self.HEIGHT // 2 + self.HEIGHT //12, "Password:", width,height,is_password=True)
-        self.repassword_textbox = Textbox(self.WIDTH  //3*2, self.HEIGHT // 2 + self.HEIGHT //12, "Rewrite Password:", width,height,is_password=True)
+        self.username_textbox = Textbox(self.WIDTH //3*2, self.HEIGHT // 2 - self.HEIGHT //7, "Username:",width,height)
+        self.password_textbox = Textbox(self.WIDTH  //3*2, self.HEIGHT // 2 , "Password:", width,height,is_password=True)
+        self.repassword_textbox = Textbox(self.WIDTH  //3*2, self.HEIGHT // 2 + self.HEIGHT //7, "Rewrite Password:", width,height,is_password=True)
         self.color = pygame.Color('lightskyblue3')
         
     def draw(self, screen,text):
@@ -26,7 +27,12 @@ class SignInScene:
         textRect = text_ship.get_rect()
         textRect.center = (self.WIDTH // 4, self.HEIGHT // 2+self.HEIGHT //7)
         screen.blit(text_ship, textRect)
-        
+        if self.lp:
+            font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 30)
+            text_false = font.render("False SignIN", True, pygame.Color(198, 216, 207))
+            textRect = text_false.get_rect()
+            textRect.center = (self.WIDTH // 4 * 3, self.HEIGHT // 1.1)
+            screen.blit(text_false, textRect)
         self.username_textbox.draw(screen)
         self.password_textbox.draw(screen)
         self.repassword_textbox.draw(screen)
@@ -36,23 +42,36 @@ class SignInScene:
         self.playRect = play.get_rect()
         self.playRect.center = (self.WIDTH  // 2, self.HEIGHT  // 1.2)
         screen.blit(play, self.playRect)
-    def get_name():
-        return 'LOGIN'
+        home = pygame.transform.scale(pygame.image.load(path+"/image/home.png"), (
+            pygame.image.load(path+"/image/home.png").get_width() // 6,
+            pygame.image.load(path+"/image/home.png").get_height() // 6))
+        self.homeRect = home.get_rect()
+        self.homeRect.center = (self.WIDTH  // 2, self.HEIGHT  // 3)
+        screen.blit(home, self.homeRect)
+
+    def get_name(self):
+        return 'SIGNIN'
     def update(self, events):
         self.username_textbox.update(events)
         self.password_textbox.update(events)
-        self.repassword_textbox.draw(events)
+        self.repassword_textbox.update(events)
 
     def element(self, events):
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.playRect.collidepoint(event.pos):
-                    return 'Username:' + self.username_textbox.text + 'Password:' + self.password_textbox.text
+                    if self.password_textbox.text == self.repassword_textbox.text:
+                        return 'Username:' + self.username_textbox.text + 'Password:' + self.password_textbox.text
+                    else:
+                        self.lp = True
+                if self.homeRect.collidepoint(event.pos):
+                    return 'LOGIN'
 
 class LoginScene:
     def __init__(self, width , height ):
         self.WIDTH = width
         self.HEIGHT = height
+        self.lp =False
         self.background = pygame.Surface((self.WIDTH, self.HEIGHT))
         bg = pygame.transform.scale(pygame.image.load(path+"/image/bg.png"), (self.WIDTH, self.HEIGHT))
         self.background.blit(bg, (-1, 0))
@@ -63,7 +82,12 @@ class LoginScene:
     def draw(self, screen,text):
     
         screen.blit(self.background, (0, 0))
-        
+        if self.lp:
+            font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 30)
+            text_false = font.render("False Login", True, pygame.Color(198, 216, 207))
+            textRect = text_false.get_rect()
+            textRect.center = (self.WIDTH // 4 * 3, self.HEIGHT // 1.1)
+            screen.blit(text_false, textRect)
         font = pygame.font.Font(path+'/font/iCielBCDDCHardwareRough-Compressed.ttf', self.WIDTH // 7)
         text_battle = font.render("Battle", True, pygame.Color(198, 216, 207))
         text_ship = font.render("Ship", True, pygame.Color(198, 216, 207))
@@ -81,6 +105,13 @@ class LoginScene:
         self.playRect = play.get_rect()
         self.playRect.center = (self.WIDTH  // 2, self.HEIGHT  // 1.2)
         screen.blit(play, self.playRect)
+
+        home = pygame.transform.scale(pygame.image.load(path+"/image/home.png"), (
+            pygame.image.load(path+"/image/home.png").get_width() // 6,
+            pygame.image.load(path+"/image/home.png").get_height() // 6))
+        self.homeRect = home.get_rect()
+        self.homeRect.center = (self.WIDTH  // 2, self.HEIGHT  // 3)
+        screen.blit(home, self.homeRect)
 
     def get_name(self):
         return 'LOGIN'
@@ -94,6 +125,8 @@ class LoginScene:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.playRect.collidepoint(event.pos):
                     return self.username_textbox.text + ' ' + self.password_textbox.text
+                if self.homeRect.collidepoint(event.pos):
+                    return 'SIGNIN'
             if event.type == pygame.KEYDOWN:
                 if event.key == pygame.K_RETURN:
                     return self.username_textbox.text + ' ' + self.password_textbox.text
@@ -553,6 +586,8 @@ class LobbySence:
                     self.check = not self.check
                     if not self.check:
                         return 'GETMATCH'
+                if self.retRect.collidepoint(pygame.mouse.get_pos()):
+                    return 'LOGOUT'
         
     def checkPop(self,check):
         self.popp = check
@@ -850,14 +885,14 @@ class ViewShip:
         screen.blit(self.background, (0, 0))
         for row in range(self.NUMBER):
             for col in range(self.NUMBER ):
-                x = col * self.CELL_SIZE + self.x
+                x = col * self.CELL_SIZE + self.x + + self.WIDTH//2
                 y = row * self.CELL_SIZE + self.y 
                 cell_surface = pygame.Surface((self.CELL_SIZE - self.GAP, self.CELL_SIZE - self.GAP), pygame.SRCALPHA)
-                if self.chess[row][col] == 1:
+                if self.chess_op[row][col] == 1:
                     cell_surface.fill((self.color_ship[0], self.color_ship[1], self.color_ship[2], self.OPACITY*2))
-                elif self.chess[row][col] == 2:
+                elif self.chess_op[row][col] == 2:
                     cell_surface.fill((self.red[0], self.red[1], self.red[2], self.OPACITY*3))
-                elif self.chess[row][col] == 3:
+                elif self.chess_op[row][col] == 3:
                     cell_surface.fill((self.blue[0], self.blue[1], self.blue[2], self.OPACITY*3))
                 else:
                     cell_surface.fill((self.color[0], self.color[1], self.color[2], self.OPACITY))
@@ -867,7 +902,7 @@ class ViewShip:
         for row in range(self.NUMBER):
             for col in range(self.NUMBER ):
                 x = col * self.CELL_SIZE + self.x
-                y = row * self.CELL_SIZE + self.y + self.WIDTH//2
+                y = row * self.CELL_SIZE + self.y 
                 cell_surface = pygame.Surface((self.CELL_SIZE - self.GAP, self.CELL_SIZE - self.GAP), pygame.SRCALPHA)
                 if self.chess[row][col] == 1:
                     cell_surface.fill((self.color_ship[0], self.color_ship[1], self.color_ship[2], self.OPACITY*2))
@@ -888,7 +923,7 @@ class ViewShip:
 
         label_text_1 = font.render(self.u2, True, pygame.Color('white'))
         textRect_1 = label_text_1.get_rect()
-        textRect_1.center = (self.WIDTH // 4 ,self.HEIGHT // 20)
+        textRect_1.center = (self.WIDTH // 4 *3,self.HEIGHT // 20)
         screen.blit(label_text_1, textRect_1)  
 
     def get_name(self):
@@ -897,31 +932,36 @@ class ViewShip:
     def update(self, events):
         pass
 
-    def check(self,text):
-        print(text)
-        if text == 'DONE':
-            self.done = True
+    def check(self,mlm):
+        elements = mlm.split()
+        if mlm == 'DONE':
+            self.done = True      
         elif self.count == 1 or self.count == 2:
-            elements = text.split()
+            
             numbers = [int(element) for element in elements[1:] if element.isdigit()]
             if self.first == -1:
                 self.u1 = elements[0]
                 self.first = numbers[0]
                 for i in range((len(numbers)-1)//2):
-                    self.chess[numbers[i+1]][numbers[i+2]] = 1
-                    i += 2
+                    self.chess[numbers[i*2+1]][numbers[i*2+2]]= 1
+                    
             else:
                 self.u2 = elements[0]
                 for i in range((len(numbers)-1)//2):
-                    self.chess_op[numbers[i+1]][numbers[i+2]] = 1
-                    i += 2
+                    self.chess_op[numbers[i*2+1]][numbers[i*2+2]] = 1
+                   
         else:
             numbers = [int(element) for element in elements[0:] if element.isdigit()]
-            if self.first == numbers[0]:
+            if not self.first == numbers[0]:
                 if (self.chess[numbers[1]][numbers[2]] == 1):
                     self.chess[numbers[1]][numbers[2]] = 2
                 else:
-                    self.chess[numbers[1]][numbers[2]] = 3     
+                    self.chess[numbers[1]][numbers[2]] = 3   
+            else:
+                if (self.chess_op[numbers[1]][numbers[2]] == 1):
+                    self.chess_op[numbers[1]][numbers[2]] = 2
+                else:
+                    self.chess_op[numbers[1]][numbers[2]] = 3  
         self.count +=1
 
 
@@ -929,7 +969,7 @@ class ViewShip:
         for event in events:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.cancelRect.collidepoint(event.pos):
-                    return 'TRUE'
+                    return 'ABC'
     
    
   

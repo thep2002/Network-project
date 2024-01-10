@@ -175,11 +175,16 @@ Account* findId(int id) {
 }
 
 
-void makeAccount(const char *message){
+int makeAccount(const char *message){
     AccoutDOT* receivedStruct = extractUsernamePassword(message);
+    if(findAccount(receivedStruct->username)){
+        free(receivedStruct);
+        return 0;
+    }
     account(tail->id+1,receivedStruct->username,receivedStruct->password);
     free(receivedStruct);
     writeFile();
+    return 1;
 }
 
 Account* loginAccount(char *message){
@@ -269,6 +274,7 @@ void sendView(int id, char str[],Account* login){
             return;
         }
     }
+    line[strlen(line)-1] = '\0';
     strcpy(str,line);
     fclose(file);
     return;
@@ -296,11 +302,23 @@ void *handle_client_thread(void *arg){
     Account* login;
     while(1){
         recv(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+        // printf("%d\n",receivedStruct.header);
         ghiLog(login,&receivedStruct);
         switch (receivedStruct.header)
         {
+        case ENDCON:
+            close(clientSocket);
+            printf("End connect form %s\n",inet_ntoa(client_addr.sin_addr));
+            return 0;
         case SIGNIN:
-            makeAccount(receivedStruct.message);
+            if(makeAccount(receivedStruct.message) == 0){
+                receivedStruct.header = SUSSCESSIGNIN;
+            }
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
+            break;
+        case LOGOUT:
+            login = NULL;
+            send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case LOGIN:
             login = loginAccount(receivedStruct.message);
@@ -312,9 +330,6 @@ void *handle_client_thread(void *arg){
                 receivedStruct.header = FALSELOGIN;
             }
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
-            break;
-        case LOGOUT:
-            login = NULL;
             break;
         case SENDBATTLE:
             login->battle = atoi(receivedStruct.message);
@@ -480,10 +495,8 @@ void *handle_client_thread(void *arg){
             break;
         case SENDVIEW:
             m = atoi(receivedStruct.message);
-            memset(&receivedStruct, 0, sizeof(receivedStruct));
-            receivedStruct.header = SENDVIEW;
+            receivedStruct.message[0] = '\0';
             sendView(m,receivedStruct.message,login);
-            printf("%s\n",receivedStruct.message);
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         default:

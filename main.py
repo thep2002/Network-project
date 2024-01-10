@@ -69,6 +69,8 @@ def main():
 
         for e in events:
             if e.type == pygame.QUIT:
+                send(p,'LOGOUT\n')
+                send(p,'ENDCON\n')
                 return
         if scene.get_name() == 'LOBBY':
             if scene.check:
@@ -171,20 +173,39 @@ def main():
                     scene.turn = False 
         elif scene.get_name() == 'VIEWSHIP':
             scene.etime = pygame.time.get_ticks()
-            if (scene.etime-scene.stime) > 1000 or scene.count == 1 or scene.count == 2 and not scene.done:
-                scene.check(send(p,'SENDVIEW' + ' ' + str(scene.count) + '\n'))
+            if ((scene.etime-scene.stime) > 500 or scene.count == 1 or scene.count == 2) and not scene.done:
+                scene.check(send(p,'SENDVIEW' + ' ' + str(scene.count)+ '\n'))
                 scene.stime = pygame.time.get_ticks()          
 
         if ele:
-            if scene.get_name() == 'LOGIN':
-                if send(p,'LOGIN' + ' ' + ele + '\n') == 'SUSSCESLOGIN':
+            if scene.get_name() == 'SIGNIN':
+                if ele == 'LOGIN':
                     scene.__init__(WIDTH,HEIGHT)
-                    scene = scenes['LOBBY']
+                    scene = scenes['LOGIN']
                 else:
-                    print("False Login")
+                    if send(p,'SIGNIN' + ' ' + ele + '\n') == 'SUSSCESSIGNIN':
+                        scene.__init__(WIDTH,HEIGHT)
+                        scene = scenes['LOGIN']
+                    else:
+                        scene.lp = True
+
+            if scene.get_name() == 'LOGIN':
+                if ele == 'SIGNIN':
+                    scene.__init__(WIDTH,HEIGHT)
+                    scene = scenes['SIGNIN']
+                else:
+                    if send(p,'LOGIN' + ' ' + ele + '\n') == 'SUSSCESLOGIN':
+                        scene.__init__(WIDTH,HEIGHT)
+                        scene = scenes['LOBBY']
+                    else:
+                        scene.lp = True
             elif scene.get_name() == 'LOBBY':
                 if ele == 'GETMATCH':
                     text = send(p,'GETMATCH\n')
+                elif ele == 'LOGOUT':
+                    send(p,'GETMATCH\n')
+                    scene.__init__(WIDTH,HEIGHT)
+                    scene = scenes['LOGIN']
                 else:
                     if not scene.check:
                         send(p,'SENDTXT' +' '+ ele +'\n')
@@ -199,9 +220,11 @@ def main():
                     send(p,'DONECHOOSE\n')
                 elif ele == 'CANCELCHOOSE':
                     send(p,'CANCELCHOOSE\n')
+            
             elif scene.get_name() == 'VIEWSHIP':
                 scene.__init__(WIDTH,HEIGHT,NUMBER)
                 scene = scenes['LOBBY']
+
             elif scene.get_name() == 'PLAYSHIP':
                 if ele == 'WAITING':
                     send(p,'WAITING\n')

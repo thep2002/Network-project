@@ -74,6 +74,15 @@ Message* extractMessage(Message* Message, const char *message) {
             if(!strcmp(word,"SENDTXT")){
                 Message->header = SENDTXT;
             }  
+            if(!strcmp(word,"LOGOUT")){
+                Message->header = LOGOUT;
+            } 
+            if(!strcmp(word,"SIGNIN")){
+                Message->header = SIGNIN;
+            } 
+            if(!strcmp(word,"ENDCON")){
+                Message->header = ENDCON;
+            } 
         }
         else {
             strcat(Message->message,word);
@@ -192,6 +201,10 @@ int main(int argc, char *argv[]) {
                 printf("%s\n",receivedStruct.message);
                 fflush(stdout);
                 break;
+            case SUSSCESSIGNIN:
+                printf("SUSSCESSIGNIN\n");
+                fflush(stdout);
+                break;
             case GETMOVE:
                 printf("%s\n",receivedStruct.message);
                 fflush(stdout);
@@ -212,6 +225,10 @@ int main(int argc, char *argv[]) {
                 printf("TRUE\n");
                 fflush(stdout);
                 break;
+            case LOGOUT:
+                printf("TRUE\n");
+                fflush(stdout);
+                break;
             case GETMATCH:
                 printf("%s\n",receivedStruct.message);
                 fflush(stdout);
@@ -220,6 +237,9 @@ int main(int argc, char *argv[]) {
                 printf("%s\n",receivedStruct.message);
                 fflush(stdout);
                 break;
+            case ENDCON:
+                close(sockfd);
+                return 0;
             default:
                 break;
         }

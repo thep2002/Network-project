@@ -88,3 +88,74 @@ LOGIN u1 p1
 LOGIN u1 p1 
 LOGIN u p 
 LOGIN u1 p1 
+LOGIN u2 p2 
+LOGIN u p 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+1 CANCELBATTLE 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u2 p2 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u1 p1 
+LOGIN u p 
+3 LOGIN u1 p1 
+LOGIN 
+LOGIN 
+LOGIN 
+LOGIN 
+LOGIN 
+LOGIN dg fd 
+LOGIN Username:u2Password:p2 
+LOGIN Username:u2Password:p2 
+LOGIN Username:u2Password:p2 
+LOGOUT 
+LOGOUT 
+LOGOUT 
+LOGOUT 
+LOGIN LOGIN 
+LOGIN LOGIN 
+LOGIN LOGIN 
+LOGIN LOGIN 
+LOGIN LOGIN 
+LOGOUT 
+LOGIN LOGIN 
+LOGIN Username:uiPassword:oi 
+LOGIN Username:uiPassword:p 
+LOGIN Username:uiPassword:p 
+LOGIN Username:uiPassword:p 
+LOGIN LOGIN 
+LOGIN LOGIN 
+LOGIN LOGIN 
+LOGIN u1 p1 
+1 LOGIN LOGIN 
+LOGOUT 
+LOGIN Username:iuPassword:o 
+LOGOUT 
+LOGIN LOGIN 
+LOGIN LOGIN 
+SIGNIN Username:uPassword:u 
+SIGNIN Username:uPassword:u 
