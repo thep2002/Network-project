@@ -240,6 +240,9 @@ int main(int argc, char *argv[]) {
             case ENDCON:
                 close(sockfd);
                 return 0;
+            case SIGNIN:
+                close(sockfd);
+                return 0;
             default:
                 break;
         }

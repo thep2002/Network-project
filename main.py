@@ -52,7 +52,7 @@ def main():
     sh = None
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     p = subprocess.Popen(
-        ['./client', '127.0.0.1', '5000'], 
+        ['./client', '127.0.0.1', '5001'], 
         stdin=subprocess.PIPE, 
         stdout=subprocess.PIPE, 
         text=True
@@ -173,7 +173,7 @@ def main():
                     scene.turn = False 
         elif scene.get_name() == 'VIEWSHIP':
             scene.etime = pygame.time.get_ticks()
-            if ((scene.etime-scene.stime) > 500 or scene.count == 1 or scene.count == 2) and not scene.done:
+            if ((scene.etime-scene.stime) > 1000 or scene.count == 1 or scene.count == 2) and not scene.done:
                 scene.check(send(p,'SENDVIEW' + ' ' + str(scene.count)+ '\n'))
                 scene.stime = pygame.time.get_ticks()          
 
@@ -189,7 +189,7 @@ def main():
                     else:
                         scene.lp = True
 
-            if scene.get_name() == 'LOGIN':
+            elif scene.get_name() == 'LOGIN':
                 if ele == 'SIGNIN':
                     scene.__init__(WIDTH,HEIGHT)
                     scene = scenes['SIGNIN']

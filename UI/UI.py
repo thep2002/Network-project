@@ -61,7 +61,7 @@ class SignInScene:
             if event.type == pygame.MOUSEBUTTONDOWN:
                 if self.playRect.collidepoint(event.pos):
                     if self.password_textbox.text == self.repassword_textbox.text:
-                        return 'Username:' + self.username_textbox.text + 'Password:' + self.password_textbox.text
+                        return self.username_textbox.text + ' ' + self.password_textbox.text
                     else:
                         self.lp = True
                 if self.homeRect.collidepoint(event.pos):

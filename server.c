@@ -59,6 +59,7 @@ void nhapThongTin() {
         perror("Could not open the file\n");
         return;
     }
+    
     char username[33];
     char password[257];
     int id;
@@ -130,7 +131,7 @@ void writeFile() {
     FILE* file = fopen("nguoidung.txt", "w");
     Account* current = head;
     while (current) {
-        fprintf(file, "%s %s \n", current->username, current->password);
+        fprintf(file, "%d %s %s \n",current->id, current->username, current->password);
         current = current->nextAccount;
     }
     fclose(file);
@@ -179,12 +180,12 @@ int makeAccount(const char *message){
     AccoutDOT* receivedStruct = extractUsernamePassword(message);
     if(findAccount(receivedStruct->username)){
         free(receivedStruct);
-        return 0;
+        return 1;
     }
     account(tail->id+1,receivedStruct->username,receivedStruct->password);
     free(receivedStruct);
     writeFile();
-    return 1;
+    return 0;
 }
 
 Account* loginAccount(char *message){
@@ -510,9 +511,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Usage: %s <port>\n", argv[0]);
         return 1;
     }
-
     nhapThongTin(); 
-
     int port = atoi(argv[1]);
     int serverSocket, clientSocket;
     socklen_t len;
