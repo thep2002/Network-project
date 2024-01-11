@@ -241,8 +241,9 @@ int main(int argc, char *argv[]) {
                 close(sockfd);
                 return 0;
             case SIGNIN:
-                close(sockfd);
-                return 0;
+                printf("TRUE\n");
+                fflush(stdout);
+                break;
             default:
                 break;
         }

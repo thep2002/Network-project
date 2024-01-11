@@ -52,7 +52,7 @@ def main():
     sh = None
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     p = subprocess.Popen(
-        ['./client', '127.0.0.1', '5001'], 
+        ['./client', '127.0.0.1', '5000'], 
         stdin=subprocess.PIPE, 
         stdout=subprocess.PIPE, 
         text=True
@@ -203,7 +203,7 @@ def main():
                 if ele == 'GETMATCH':
                     text = send(p,'GETMATCH\n')
                 elif ele == 'LOGOUT':
-                    send(p,'GETMATCH\n')
+                    send(p,'LOGOUT\n')
                     scene.__init__(WIDTH,HEIGHT)
                     scene = scenes['LOGIN']
                 else:
