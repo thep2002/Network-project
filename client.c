@@ -87,6 +87,7 @@ Message* extractMessage(Message* Message, const char *message) {
         else {
             strcat(Message->message,word);
             strcat(Message->message," ");
+            
             }
         i++;
         message += strlen(word) + 1;

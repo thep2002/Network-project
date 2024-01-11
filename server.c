@@ -298,7 +298,8 @@ void *handle_client_thread(void *arg){
     if (getpeername(clientSocket, (struct sockaddr*)&client_addr, &len) == -1) {
         perror("Error getting client address");
         close(clientSocket);
-        pthread_exit(NULL);
+        pthread_exit(NULL); 
+        
     }
     Account* login;
     while(1){
