@@ -52,7 +52,7 @@ def main():
     sh = None
     screen = pygame.display.set_mode((WIDTH, HEIGHT))
     p = subprocess.Popen(
-        ['./client', '127.0.0.1', '5000'], 
+        ['./client', '192.168.196.11', '5000'], 
         stdin=subprocess.PIPE, 
         stdout=subprocess.PIPE, 
         text=True

@@ -319,9 +319,10 @@ void *handle_client_thread(void *arg){
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case LOGOUT:
-            login->clientSocket = -1;
-            login = NULL;
-            
+            if(login){
+                login->clientSocket = -1;
+                login = NULL;
+            }
             send(clientSocket, &receivedStruct, sizeof(receivedStruct), 0);
             break;
         case LOGIN:
